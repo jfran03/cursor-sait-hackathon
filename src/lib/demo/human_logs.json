@@ -1,0 +1,36 @@
+  "biometric_and_spatial_logs": {
+    "current_activity_state": {
+      "timestamp": "2026-05-23T22:15:00Z",
+      "inferred_activity": "Partying / Social Ingestion",
+      "confidence_score": 0.94,
+      "suppress_nudges": false,
+      "intervention_required": true
+    },
+    "spatial_telemetry": {
+      "current_location_type": "Commercial / Entertainment District",
+      "geofence_tag": "The Hudson Pub (Near SAIT Campus)",
+      "duration_at_current_location_minutes": 180,
+      "distance_from_home_base_km": 2.4
+    },
+    "fitness_tracker_metrics": {
+      "heart_rate_bpm": 105,
+      "heart_rate_baseline_resting_bpm": 62,
+      "activity_intensity": "Low-Moderate (Consistent ambient noise / erratic movement)",
+      "step_count_today": 12450,
+      "sleep_debt_accumulated_hours": 4.5
+    },
+    "historical_physical_baselines": [
+      {
+        "activity": "Working Out / Fitness",
+        "avg_heart_rate_bpm": 145,
+        "typical_geofences": ["SAIT Campus Recreation Centre", "Calgary Public Library"],
+        "system_action": "SUPPRESS_ALL_NUDGES (Protecting physiological health block)"
+      },
+      {
+        "activity": "Partying / High Density Socializing",
+        "avg_heart_rate_bpm": 102,
+        "typical_geofences": ["Downtown Bar District", "Student Housing Lounge"],
+        "system_action": "EVALUATE_STALL_CRITICALITY (Nudge if high priority assignment is due < 24h)"
+      }
+    ]
+  }
