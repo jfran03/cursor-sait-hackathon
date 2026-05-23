@@ -1,0 +1,87 @@
+{
+  "user": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Alex"
+  },
+  "goals": [
+    {
+      "id": "10000000-0000-0000-0000-000000000001",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Finish research paper on neural network interpretability",
+      "created_at": "2026-05-11T09:00:00Z"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000002",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Complete data structures homework (Assignment 4)",
+      "created_at": "2026-05-15T10:00:00Z"
+    }
+  ],
+  "commitments": [
+    {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Helped roommate move furniture",
+      "hours": 3,
+      "is_goal_directed": false,
+      "created_at": "2026-05-19T14:00:00Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000002",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Covered a shift for coworker at campus job",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-20T16:00:00Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000003",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Attended biology study group (not my course)",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-21T11:00:00Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000004",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Group project coordination meeting",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-22T13:00:00Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000005",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "title": "Skimmed two papers for research background",
+      "hours": 1,
+      "is_goal_directed": true,
+      "created_at": "2026-05-11T20:00:00Z"
+    }
+  ],
+  "stalled_item": {
+    "goal_id": "10000000-0000-0000-0000-000000000002",
+    "goal_title": "Complete data structures homework (Assignment 4)",
+    "days_since_activity": 6,
+    "note": "Started problem 1, hasn't touched it since Monday"
+  },
+  "drift_context": {
+    "week_start": "2026-05-19",
+    "unplanned_hours": 9,
+    "goal_directed_hours": 1,
+    "stalled_goals": [
+      {
+        "goal_title": "Finish research paper on neural network interpretability",
+        "days_since_activity": 12
+      },
+      {
+        "goal_title": "Complete data structures homework (Assignment 4)",
+        "days_since_activity": 6
+      }
+    ]
+  },
+  "incoming_request": {
+    "from": "Club president",
+    "description": "Help set up the AI club booth at the campus fair tomorrow afternoon (3 hours)"
+  }
+}
