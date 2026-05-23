@@ -10,6 +10,7 @@
 > ```
 > projects/2026-05-cursor-calgary-sait/
 > ├── CLAUDE.md          ← this file (project brief, created Stage 01)
+> ├── team-brief.md      ← shareable brief for team members
 > ├── repo-context.md    ← only if a repo was cloned (created Stage 02 intake)
 > ├── src/               ← build artifact (Stage 02)
 > └── pitch/             ← deck, script, writeup (Stage 03)
@@ -32,74 +33,88 @@
 ---
 
 ## Problem
-*(one sentence, plain language — written at Stage 01 gate)*
+
+People make small, reasonable daily decisions — accepting invitations, helping others, taking on extra work — that individually feel justified but collectively pull them away from what they actually care about. The drift is invisible until it's too late to recover.
 
 ---
 
 ## Target User
-*(specific persona, specific moment, specific frustration — written at Stage 01 gate)*
 
-> Who: 
-> When: 
-> Frustration: 
+> **Who:** A student with real long-term goals competing against an endless stream of immediate demands
+> **When:** The moment they realize they've been busy all week but haven't moved on what actually matters
+> **Frustration:** Every yes felt reasonable. No one was tracking the cumulative cost.
 
 ---
 
 ## Wow Moment
-*(the single thing that makes a judge lean forward — written at Stage 01 gate)*
+
+Halo reflects back the gap between who you said you wanted to be and where your time actually went — before the week is already lost.
 
 ---
 
 ## Spec
-*(written at Stage 01 gate — the contract Stage 02 builds to)*
 
 ### User Journey
-*(numbered steps in demo order — 5 max)*
-1.
-2.
-3.
+*(numbered steps in demo order)*
+
+1. Alex onboards — states two goals and logs this week's commitments and accepted invitations
+2. Alex is about to accept another request — Halo surfaces the drift: *"9 unplanned hours this week. Research paper: 0 hours in 12 days."*
+3. Halo generates tonight's priority list — what matters, time-boxed to Alex's real pace
+4. DS homework flagged as stalled — Halo breaks it into 4 chunks, first one is 20 minutes
+5. Session closes: *"3 hours protected for your goals tonight. You're back on track."*
 
 ### Done When
-*(one acceptance criterion per journey step — what "working" looks like for each)*
-1.
-2.
-3.
+
+1. User can enter goals + commitments; system persists to Supabase and confirms receipt
+2. System calculates unplanned hours vs. goal-directed hours; drift message surfaces with real numbers from the data
+3. Claude returns a ranked priority list with time estimates; displayed clearly in the UI
+4. Stall signal detected (triggered via demo data); Claude returns 4 sub-tasks; displayed as actionable steps
+5. Session summary card renders with protected hours count and next goal nudge
 
 ---
 
 ## Scope
 
 ### In scope
--
+- Goal setting (stated priorities, long-term goals)
+- Commitment tracking (tasks, accepted invitations, ad-hoc help)
+- Drift detection and surfacing (gap between stated goals and actual time allocation)
+- Tonight's priority list generation (Claude, time-boxed)
+- Task decomposition for stalled items (procrastination signal → sub-tasks)
+- Gentle nudging tied to stated goals
+- Pre-seeded demo scenario (Alex) for live demo
 
 ### Explicitly out of scope
--
--
+- Calendar integration (no OAuth, no Google Calendar)
+- Mobile app
+- Multi-user / team features
+- Real-time data ingestion from external sources
+- Notifications / push alerts
 
 ### Feasibility check
-- Buildable in time? 
-- Demoable live? 
-- Does someone clearly need this? 
+- Buildable in time? Yes — 4 people, clear feature ownership, standard stack
+- Demoable live? Yes — pre-seeded Alex scenario, all steps exercisable in under 60 seconds
+- Does someone clearly need this? Yes — the team named the pain themselves (competing priorities, impulsive yes, drift from goals)
 
 ---
 
 ## Stack
-*(pulled from `shared/wiki/our-team.md` preferred stack, adjusted for this event — written at Stage 01 gate)*
 
 | Layer | Choice | Reason for deviation (if any) |
 |---|---|---|
-| Frontend | | |
-| Backend | | |
-| Data | | |
-| AI / LLM | | |
-| Deployment | | |
+| Frontend | React + Next.js (App Router) | Default preferred stack |
+| Backend | Next.js API routes (`/app/api`) | Collocated, deploys as Vercel serverless automatically |
+| Data | Supabase | Postgres + auth + storage; MCP available during build |
+| AI / LLM | Claude (Anthropic) | Load-bearing: behavioral inference, drift detection, task decomposition, priority generation |
+| Deployment | Vercel | Native Next.js host; Vercel MCP available |
+
+---
 
 ## Visual Reference
-*(optional — fill in if Jerome provides one before or at Stage 02. Used to guide `/frontend-design` at scaffold time.)*
 
-- **Reference:** *(URL, Figma link, or description)*
-- **What to take from it:** *(layout, color palette, component style, overall vibe — be specific)*
-- **What to ignore:** *(anything that conflicts with the stack or scope)*
+- **Reference:** TBD — fill in if provided before Stage 02 scaffold
+- **What to take from it:** —
+- **What to ignore:** —
 
 ---
 
