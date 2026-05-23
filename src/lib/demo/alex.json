@@ -1,20 +1,47 @@
 {
   "user": {
     "id": "00000000-0000-0000-0000-000000000001",
-    "name": "Alex"
+    "name": "Alex",
+    "demographics": {
+      "age": 20,
+      "institution": "Southern Alberta Institute of Technology (SAIT)",
+      "program": "Computer Information Systems (CIS)",
+      "current_year": "2nd Year",
+      "enrollment_status": "Full-Time"
+    },
+    "expertise": {
+      "primary_technical_domain": "Full-Stack Web Development & UI Prototyping",
+      "known_languages": ["JavaScript", "TypeScript", "Python", "HTML/CSS"],
+      "frameworks_used": ["React", "Next.js", "Express"],
+      "research_focus_area": "Applying Generative AI to Interface Decomposition Models",
+      "academic_strengths": "Rapid visual implementation, semantic coding structures, and frontend routing architecture.",
+      "academic_stretches": "Algorithmic execution, Big-O computational proofs, and manual pointer manipulation."
+    }
   },
   "goals": [
     {
       "id": "10000000-0000-0000-0000-000000000001",
       "user_id": "00000000-0000-0000-0000-000000000001",
       "title": "Finish research paper on neural network interpretability",
-      "created_at": "2026-05-11T09:00:00Z"
+      "context": "Publish research paper progress to meet degree expectations",
+      "created_at": "2026-05-11T09:00:00Z",
+      "academic_metrics": {
+        "target_hours_per_week": 10,
+        "days_since_active_engagement": 12,
+        "completion_trend": "Severely Stalled"
+      }
     },
     {
       "id": "10000000-0000-0000-0000-000000000002",
       "user_id": "00000000-0000-0000-0000-000000000001",
       "title": "Complete data structures homework (Assignment 4)",
-      "created_at": "2026-05-15T10:00:00Z"
+      "context": "CMPT-2201: Advanced Data Structures & Algorithms. Target: B+ Minimum",
+      "created_at": "2026-05-15T10:00:00Z",
+      "academic_metrics": {
+        "target_hours_per_week": 15,
+        "days_since_active_engagement": 6,
+        "completion_trend": "Declining (Midterm exam: C+)"
+      }
     }
   ],
   "commitments": [
@@ -59,26 +86,29 @@
       "created_at": "2026-05-11T20:00:00Z"
     }
   ],
-  "stalled_item": {
-    "goal_id": "10000000-0000-0000-0000-000000000002",
-    "goal_title": "Complete data structures homework (Assignment 4)",
-    "days_since_activity": 6,
-    "note": "Started problem 1, hasn't touched it since Monday"
+  "historical_trends": {
+    "gpa_cumulative": 3.12,
+    "estimated_vs_actual_velocity_multiplier": 2.0,
+    "procrastination_index": "High (Freezes on abstract math and manual pointer execution)",
+    "past_grades": [
+      { "code": "CMPT-1101", "name": "Introduction to OOP", "grade": "A-" },
+      { "code": "CMPT-1201", "name": "Discrete Mathematics", "grade": "B" },
+      { "code": "MATH-1250", "name": "Calculus I", "grade": "C+" }
+    ]
   },
   "drift_context": {
     "week_start": "2026-05-19",
     "unplanned_hours": 9,
     "goal_directed_hours": 1,
-    "stalled_goals": [
-      {
-        "goal_title": "Finish research paper on neural network interpretability",
-        "days_since_activity": 12
-      },
-      {
-        "goal_title": "Complete data structures homework (Assignment 4)",
-        "days_since_activity": 6
-      }
-    ]
+    "behavioral_summary": "9 unplanned hours this week. Research paper has received 0 hours in 12 days."
+  },
+  "stalled_item": {
+    "goal_id": "10000000-0000-0000-0000-000000000002",
+    "goal_title": "Complete data structures homework (Assignment 4)",
+    "days_since_activity": 6,
+    "tab_switches_and_revisits": 6,
+    "lines_of_code_changed_last_48h": 0,
+    "note": "Started problem 1, hasn't touched it since Monday due to blocker on abstract algorithmic proofs."
   },
   "incoming_request": {
     "from": "Club president",
