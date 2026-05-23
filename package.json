@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prompts": "tsx --env-file=.env src/scripts/run-prompts.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
