@@ -190,6 +190,20 @@ Halo reflects back the gap between who you said you wanted to be and where your 
 
 ---
 
+## UI & Design
+
+**Before writing any UI code, read `DESIGN.md` in the project root.** It is the authoritative design specification for Halo — tokens, typography, components, and do's/don'ts are all defined there. Do not invent colors, font weights, border radii, or spacing values; pull them from DESIGN.md.
+
+Quick reference:
+- Canvas: `#f5f5f5` · Surface card: `#ffffff` · Ink: `#0c0a09` · Body text: `#4e4e4e`
+- Primary CTA: `#292524` pill (`border-radius: 9999px`), active: `#0c0a09`
+- Display font: EB Garamond weight 400 (Waldenburg substitute) with negative letter-spacing
+- Body font: Inter weight 400/500 at +0.15–0.16px tracking
+- Cards: `border-radius: 16px`, `1px solid #e7e5e4`, hover shadow `0 4px 16px rgba(0,0,0,0.04)`
+- Gradient orbs (mint/peach/lavender/sky/rose) — atmospheric decoration only, never fills or text colors
+
+---
+
 ## Coding Guidelines
 
 <!-- BEGIN:nextjs-agent-rules -->

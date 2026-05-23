@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand */
+  --color-primary:          #292524;
+  --color-primary-active:   #0c0a09;
+  --color-on-primary:       #ffffff;
+
+  /* Canvas */
+  --color-canvas:           #f5f5f5;
+  --color-canvas-soft:      #fafafa;
+
+  /* Surfaces */
+  --color-surface-card:     #ffffff;
+  --color-surface-strong:   #f0efed;
+  --color-surface-dark:     #0c0a09;
+
+  /* Text */
+  --color-ink:              #0c0a09;
+  --color-body:             #4e4e4e;
+  --color-body-strong:      #292524;
+  --color-muted:            #777169;
+  --color-muted-soft:       #a8a29e;
+
+  /* Hairlines */
+  --color-hairline:         #e7e5e4;
+  --color-hairline-soft:    #f0efed;
+  --color-hairline-strong:  #d6d3d1;
+
+  /* Gradient orbs — atmospheric only */
+  --color-orb-mint:         #a7e5d3;
+  --color-orb-peach:        #f4c5a8;
+  --color-orb-lavender:     #c8b8e0;
+  --color-orb-sky:          #a8c8e8;
+  --color-orb-rose:         #e8b8c4;
+
+  /* Semantic */
+  --color-error:            #dc2626;
+  --color-success:          #16a34a;
+
+  /* Fonts */
+  --font-display: var(--font-eb-garamond);
+  --font-sans:    var(--font-inter);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-body);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes orb-drift {
+  0%,  100% { transform: translate(0,    0)    scale(1);    }
+  33%        { transform: translate(20px, -14px) scale(1.04); }
+  66%        { transform: translate(-12px, 9px)  scale(0.97); }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  animation: orb-drift 20s ease-in-out infinite;
+  pointer-events: none;
 }
