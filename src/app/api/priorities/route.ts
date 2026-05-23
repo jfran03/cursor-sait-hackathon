@@ -1,62 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { PriorityListResponseSchema } from "@/lib/types";
 import { PRIORITIES_SYSTEM_PROMPT } from "@/lib/prompts/priorities";
 
-const client = new Anthropic();
+const client = new OpenAI({
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseURL: "https://integrate.api.nvidia.com/v1",
+});
+
+const MODEL = "meta/llama-3.1-70b-instruct";
 
 export async function POST(req: NextRequest) {
   const { goals, commitments } = await req.json();
 
   const userMessage = `Goals: ${JSON.stringify(goals)}\n\nCommitments this week: ${JSON.stringify(commitments)}`;
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await client.chat.completions.create({
+    model: MODEL,
     max_tokens: 1024,
-    system: [
-      {
-        type: "text",
-        text: PRIORITIES_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
+    messages: [
+      { role: "system", content: PRIORITIES_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
     ],
-    messages: [{ role: "user", content: userMessage }],
     tools: [
       {
-        name: "priority_list",
-        description: "Generate tonight's priority list for the student",
-        input_schema: {
-          type: "object" as const,
-          properties: {
-            items: {
-              type: "array",
+        type: "function",
+        function: {
+          name: "priority_list",
+          description: "Generate tonight's priority list for the student",
+          parameters: {
+            type: "object",
+            properties: {
               items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  goal: { type: "string" },
-                  estimated_minutes: { type: "number" },
-                  rationale: { type: "string" },
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    goal: { type: "string" },
+                    estimated_minutes: { type: "number" },
+                    rationale: { type: "string" },
+                  },
+                  required: ["title", "goal", "estimated_minutes", "rationale"],
                 },
-                required: ["title", "goal", "estimated_minutes", "rationale"],
               },
+              protected_hours: { type: "number" },
+              closing_message: { type: "string" },
             },
-            protected_hours: { type: "number" },
-            closing_message: { type: "string" },
+            required: ["items", "protected_hours", "closing_message"],
           },
-          required: ["items", "protected_hours", "closing_message"],
         },
       },
     ],
-    tool_choice: { type: "tool", name: "priority_list" },
+    tool_choice: { type: "function", function: { name: "priority_list" } },
   });
 
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    return NextResponse.json({ error: "No tool use in response" }, { status: 500 });
+  const toolCall = response.choices[0]?.message?.tool_calls?.find((tc) => tc.type === "function");
+  if (!toolCall) {
+    return NextResponse.json({ error: "No tool call in response" }, { status: 500 });
   }
 
-  const parsed = PriorityListResponseSchema.safeParse(toolUse.input);
+  let parsed;
+  try {
+    parsed = PriorityListResponseSchema.safeParse(JSON.parse(toolCall.function.arguments));
+  } catch {
+    return NextResponse.json({ error: "Failed to parse tool call arguments" }, { status: 500 });
+  }
+
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid response shape", details: parsed.error }, { status: 500 });
   }

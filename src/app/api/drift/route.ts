@@ -1,61 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { DriftResponseSchema } from "@/lib/types";
 import { DRIFT_SYSTEM_PROMPT } from "@/lib/prompts/drift";
 
-const client = new Anthropic();
+const client = new OpenAI({
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseURL: "https://integrate.api.nvidia.com/v1",
+});
+
+const MODEL = "meta/llama-3.1-70b-instruct";
 
 export async function POST(req: NextRequest) {
   const { goals, commitments } = await req.json();
 
   const userMessage = `Goals: ${JSON.stringify(goals)}\n\nCommitments this week: ${JSON.stringify(commitments)}`;
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await client.chat.completions.create({
+    model: MODEL,
     max_tokens: 1024,
-    system: [
-      {
-        type: "text",
-        text: DRIFT_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
+    messages: [
+      { role: "system", content: DRIFT_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
     ],
-    messages: [{ role: "user", content: userMessage }],
     tools: [
       {
-        name: "drift_report",
-        description: "Report the drift between stated goals and actual time allocation",
-        input_schema: {
-          type: "object" as const,
-          properties: {
-            unplanned_hours: { type: "number" },
-            goal_directed_hours: { type: "number" },
-            stalled_goals: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  goal_title: { type: "string" },
-                  days_since_activity: { type: "number" },
+        type: "function",
+        function: {
+          name: "drift_report",
+          description: "Report the drift between stated goals and actual time allocation",
+          parameters: {
+            type: "object",
+            properties: {
+              unplanned_hours: { type: "number" },
+              goal_directed_hours: { type: "number" },
+              stalled_goals: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    goal_title: { type: "string" },
+                    days_since_activity: { type: "number" },
+                  },
+                  required: ["goal_title", "days_since_activity"],
                 },
-                required: ["goal_title", "days_since_activity"],
               },
+              message: { type: "string" },
             },
-            message: { type: "string" },
+            required: ["unplanned_hours", "goal_directed_hours", "stalled_goals", "message"],
           },
-          required: ["unplanned_hours", "goal_directed_hours", "stalled_goals", "message"],
         },
       },
     ],
-    tool_choice: { type: "tool", name: "drift_report" },
+    tool_choice: { type: "function", function: { name: "drift_report" } },
   });
 
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    return NextResponse.json({ error: "No tool use in response" }, { status: 500 });
+  const toolCall = response.choices[0]?.message?.tool_calls?.find((tc) => tc.type === "function");
+  if (!toolCall) {
+    return NextResponse.json({ error: "No tool call in response" }, { status: 500 });
   }
 
-  const parsed = DriftResponseSchema.safeParse(toolUse.input);
+  let parsed;
+  try {
+    parsed = DriftResponseSchema.safeParse(JSON.parse(toolCall.function.arguments));
+  } catch {
+    return NextResponse.json({ error: "Failed to parse tool call arguments" }, { status: 500 });
+  }
+
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid response shape", details: parsed.error }, { status: 500 });
   }

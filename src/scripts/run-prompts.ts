@@ -1,36 +1,96 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import alex from "../lib/demo/alex.json";
+import history from "../lib/demo/historical_work_metadata.json";
+import telemetry from "../lib/demo/telemetry.json";
+import humanLogs from "../lib/demo/human_logs.json";
 import { DRIFT_SYSTEM_PROMPT } from "../lib/prompts/drift";
 import { PRIORITIES_SYSTEM_PROMPT } from "../lib/prompts/priorities";
 import { DECOMPOSE_SYSTEM_PROMPT } from "../lib/prompts/decompose";
 
-const client = new Anthropic();
+const client = new OpenAI({
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseURL: "https://integrate.api.nvidia.com/v1",
+});
 
-async function callClaude(
+const MODEL = "meta/llama-3.1-70b-instruct";
+
+async function callModel(
   systemPrompt: string,
   userMessage: string,
   toolName: string,
-  toolSchema: Anthropic.Tool["input_schema"]
+  parameters: OpenAI.FunctionParameters
 ): Promise<unknown> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await client.chat.completions.create({
+    model: MODEL,
     max_tokens: 1024,
-    system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: userMessage }],
-    tools: [{ name: toolName, description: "", input_schema: toolSchema }],
-    tool_choice: { type: "tool", name: toolName },
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+    tools: [{ type: "function", function: { name: toolName, description: "", parameters } }],
+    tool_choice: { type: "function", function: { name: toolName } },
   });
 
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") throw new Error("No tool_use block in response");
-  return toolUse.input;
+  const toolCall = response.choices[0]?.message?.tool_calls?.find((tc) => tc.type === "function");
+  if (!toolCall) throw new Error("No function tool call in response");
+  return JSON.parse(toolCall.function.arguments);
 }
 
-const commitmentMsg = `Goals: ${JSON.stringify(alex.goals)}\n\nCommitments this week: ${JSON.stringify(alex.commitments)}`;
+// ── User messages ─────────────────────────────────────────────────────────────
+
+const driftMessage = `
+Goals: ${JSON.stringify(alex.goals)}
+
+Commitments this week: ${JSON.stringify(alex.commitments)}
+
+Historical context:
+- GPA: ${history.historical_trends.gpa_cumulative}
+- Global velocity multiplier: ${history.historical_trends.global_velocity_multiplier}x (tasks take this much longer than estimated on average)
+- Procrastination index: ${history.historical_trends.procrastination_index}
+
+Biometric and spatial context: ${JSON.stringify(humanLogs.biometric_and_spatial)}
+
+Cognitive environment: ${JSON.stringify(telemetry.cognitive_environment)}
+`.trim();
+
+const prioritiesMessage = `
+Goals: ${JSON.stringify(alex.goals)}
+
+Commitments this week: ${JSON.stringify(alex.commitments)}
+
+Assignment velocity history (use for realistic time estimates):
+${JSON.stringify(history.assignment_baselines)}
+
+Cognitive environment: ${JSON.stringify(telemetry.cognitive_environment)}
+
+Biometric and spatial context: ${JSON.stringify(humanLogs.biometric_and_spatial)}
+`.trim();
+
+const decomposeMessage = `
+Stalled task: "${alex.stalled_item.goal_title}"
+Goal it serves: "${alex.goals[1].title}"
+
+Live IDE telemetry: ${JSON.stringify(telemetry.ide_telemetry_window_30m)}
+
+Active stalled item data: ${JSON.stringify(telemetry.active_stalled_item)}
+
+Behavioral friction profile: ${JSON.stringify(telemetry.behavioral_friction)}
+
+Historical performance on similar task types:
+${JSON.stringify(history.assignment_baselines.filter(a => a.conceptual_type.includes("Abstract Math")))}
+
+Cognitive and biometric state:
+- Fatigue: ${telemetry.cognitive_environment.current_fatigue_level}
+- Sleep debt: ${humanLogs.biometric_and_spatial.fitness_tracker.sleep_debt_accumulated_hours}h
+- Current location: ${humanLogs.biometric_and_spatial.spatial.geofence_tag}
+- Inferred activity: ${humanLogs.biometric_and_spatial.current_activity.inferred_activity}
+`.trim();
+
+// ── Prompt runners ────────────────────────────────────────────────────────────
 
 const prompts = {
   drift: () =>
-    callClaude(DRIFT_SYSTEM_PROMPT, commitmentMsg, "drift_report", {
+    callModel(DRIFT_SYSTEM_PROMPT, driftMessage, "drift_report", {
       type: "object",
       properties: {
         unplanned_hours:     { type: "number" },
@@ -52,7 +112,7 @@ const prompts = {
     }),
 
   priorities: () =>
-    callClaude(PRIORITIES_SYSTEM_PROMPT, commitmentMsg, "priority_list", {
+    callModel(PRIORITIES_SYSTEM_PROMPT, prioritiesMessage, "priority_list", {
       type: "object",
       properties: {
         items: {
@@ -60,10 +120,10 @@ const prompts = {
           items: {
             type: "object",
             properties: {
-              title:               { type: "string" },
-              goal:                { type: "string" },
-              estimated_minutes:   { type: "number" },
-              rationale:           { type: "string" },
+              title:             { type: "string" },
+              goal:              { type: "string" },
+              estimated_minutes: { type: "number" },
+              rationale:         { type: "string" },
             },
             required: ["title", "goal", "estimated_minutes", "rationale"],
           },
@@ -75,31 +135,26 @@ const prompts = {
     }),
 
   decompose: () =>
-    callClaude(
-      DECOMPOSE_SYSTEM_PROMPT,
-      `Stalled task: "${alex.stalled_item.goal_title}"\nGoal it serves: "${alex.goals[1].title}"`,
-      "decompose_task",
-      {
-        type: "object",
-        properties: {
-          subtasks: {
-            type: "array",
-            minItems: 4,
-            maxItems: 4,
-            items: {
-              type: "object",
-              properties: {
-                title:               { type: "string" },
-                estimated_minutes:   { type: "number" },
-              },
-              required: ["title", "estimated_minutes"],
+    callModel(DECOMPOSE_SYSTEM_PROMPT, decomposeMessage, "decompose_task", {
+      type: "object",
+      properties: {
+        subtasks: {
+          type: "array",
+          minItems: 4,
+          maxItems: 4,
+          items: {
+            type: "object",
+            properties: {
+              title:             { type: "string" },
+              estimated_minutes: { type: "number" },
             },
+            required: ["title", "estimated_minutes"],
           },
-          nudge: { type: "string" },
         },
-        required: ["subtasks", "nudge"],
-      }
-    ),
+        nudge: { type: "string" },
+      },
+      required: ["subtasks", "nudge"],
+    }),
 };
 
 type PromptKey = keyof typeof prompts;

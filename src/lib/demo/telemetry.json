@@ -1,8 +1,8 @@
 {
-  "user_id": "usr_000000000001",
-  "active_stalled_item_telemetry": {
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "active_stalled_item": {
     "item_id": "hw_ds_04",
-    "goal_id": "goal_000000000002",
+    "goal_id": "10000000-0000-0000-0000-000000000002",
     "title": "Assignment 4: Binary Search Trees & Recursive Balance Proofs",
     "conceptual_type": "Abstract Math & Complex Algorithms",
     "estimated_duration_minutes": 210,
@@ -22,14 +22,14 @@
     "lines_added": 0,
     "lines_deleted": 2,
     "compilation_failures_consecutive": 4,
-    "last_compile_error_message": "Segmentation fault (core dumped) during recursive rotation pointer reassignment",
+    "last_compile_error": "Segmentation fault (core dumped) during recursive rotation pointer reassignment",
     "time_spent_in_browser_tabs": {
       "stack_overflow_or_docs_minutes": 2,
       "youtube_or_reddit_minutes": 18,
       "whatsapp_web_minutes": 10
     }
   },
-  "behavioral_friction_rules": {
+  "behavioral_friction": {
     "procrastination_trigger_type": "Perfectionism & Fear of Failure",
     "friction_threshold_tab_switches": 5
   }
