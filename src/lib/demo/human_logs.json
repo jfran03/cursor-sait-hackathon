@@ -1,3 +1,71 @@
+{
+  "user_id": "usr_000000000001",
+  "goals": [
+    {
+      "goal_id": "goal_000000000001",
+      "title": "Finish research paper on neural network interpretability",
+      "context": "Publish research paper progress to meet degree expectations",
+      "created_at": "2026-05-11T09:00:00Z",
+      "days_since_active_engagement": 12,
+      "completion_trend": "Severely Stalled"
+    },
+    {
+      "goal_id": "goal_000000000002",
+      "title": "Complete data structures homework (Assignment 4)",
+      "context": "CMPT-2201: Advanced Data Structures & Algorithms. Target: B+ Minimum",
+      "created_at": "2026-05-15T10:00:00Z",
+      "days_since_active_engagement": 6,
+      "completion_trend": "Declining (Midterm exam: C+)"
+    }
+  ],
+  "commitments": [
+    {
+      "commitment_id": "com_000000000001",
+      "title": "Helped roommate move furniture",
+      "hours": 3,
+      "is_goal_directed": false,
+      "created_at": "2026-05-19T14:00:00Z"
+    },
+    {
+      "commitment_id": "com_000000000002",
+      "title": "Covered a shift for coworker at campus job",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-20T16:00:00Z"
+    },
+    {
+      "commitment_id": "com_000000000003",
+      "title": "Attended biology study group (not my course)",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-21T11:00:00Z"
+    },
+    {
+      "commitment_id": "com_000000000004",
+      "title": "Group project coordination meeting",
+      "hours": 2,
+      "is_goal_directed": false,
+      "created_at": "2026-05-22T13:00:00Z"
+    },
+    {
+      "commitment_id": "com_000000000005",
+      "title": "Skimmed two papers for research background",
+      "hours": 1,
+      "is_goal_directed": true,
+      "created_at": "2026-05-11T20:00:00Z"
+    }
+  ],
+  "drift_context": {
+    "week_start": "2026-05-19",
+    "unplanned_hours": 9,
+    "goal_directed_hours": 1,
+    "behavioral_summary": "9 unplanned hours this week. Research paper has received 0 hours in 12 days."
+  },
+  "incoming_request": {
+    "request_id": "req_000000000001",
+    "from": "Club president",
+    "description": "Help set up the AI club booth at the campus fair tomorrow afternoon (3 hours)"
+  }
   "biometric_and_spatial_logs": {
     "current_activity_state": {
       "timestamp": "2026-05-23T22:15:00Z",
@@ -34,3 +102,4 @@
       }
     ]
   }
+}
