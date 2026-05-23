@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "supabase": {},
+    "vercel": {}
+  },
+  "skills": [
+    "superpowers",
+    "gstack"
+  ]
+}

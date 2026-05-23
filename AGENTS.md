@@ -9,11 +9,16 @@
 > **Project folder layout:**
 > ```
 > projects/2026-05-cursor-calgary-sait/
-> ├── CLAUDE.md          ← this file (project brief, created Stage 01)
-> ├── team-brief.md      ← shareable brief for team members
-> ├── repo-context.md    ← only if a repo was cloned (created Stage 02 intake)
-> ├── src/               ← build artifact (Stage 02)
-> ├── docs/              ← info organization (Stage 02)
+> ├── AGENTS.md          ← this file (project brief + coding guidelines)
+> ├── CLAUDE.md          ← @AGENTS.md
+> ├── .mcp.json          ← MCP server config
+> ├── .claude/           ← Claude Code settings
+> ├── package.json
+> ├── next.config.ts
+> ├── tsconfig.json
+> ├── src/               ← Next.js source (app/, components/, lib/, scripts/)
+> ├── supabase/          ← migrations
+> ├── docs/              ← reference docs
 > └── pitch/             ← deck, script, writeup (Stage 03)
 > ```
 
@@ -182,3 +187,19 @@ Halo reflects back the gap between who you said you wanted to be and where your 
 
 
 ### 3-minute version outline
+
+---
+
+## Coding Guidelines
+
+<!-- BEGIN:nextjs-agent-rules -->
+This version of Next.js has breaking changes — APIs, conventions, and file structure may differ from training data. Read `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
+
+**Think before coding.** State assumptions explicitly. If multiple interpretations exist, present them — don't pick silently. If something is unclear, stop and ask.
+
+**Simplicity first.** Minimum code that solves the problem. No features beyond what was asked. No abstractions for single-use code. If you write 200 lines and it could be 50, rewrite it.
+
+**Surgical changes.** Touch only what you must. Match existing style. Don't refactor things that aren't broken. Every changed line should trace directly to the request.
+
+**Goal-driven execution.** For multi-step tasks, state a brief plan with verifiable steps before starting. Define success criteria up front.
