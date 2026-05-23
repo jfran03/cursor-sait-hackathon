@@ -1,50 +1,45 @@
 {
-  "historical_work_metadata": {
-    "course_id": "CMPT-2201",
-    "course_name": "Advanced Data Structures & Algorithms",
-    "historical_baseline_metrics": [
-      {
-        "item_id": "hw_ds_01",
-        "title": "Assignment 1: Object-Oriented Review & Array Lists",
-        "conceptual_type": "Practical Coding",
-        "estimated_duration_minutes": 120,
-        "actual_time_spent_minutes": 145,
-        "editor_tab_switches_before_completion": 4,
-        "grade_received": "A-",
-        "completion_status": "Success",
-        "velocity_drift_multiplier": 1.2
-      },
-      {
-        "item_id": "hw_ds_02",
-        "title": "Assignment 2: Linked Lists & Manual Pointer Logic",
-        "conceptual_type": "Abstract Math & Pointers",
-        "estimated_duration_minutes": 180,
-        "actual_time_spent_minutes": 340,
-        "editor_tab_switches_before_completion": 19,
-        "grade_received": "B-",
-        "completion_status": "Success (Submitted 2h late)",
-        "velocity_drift_multiplier": 1.88
-      },
-      {
-        "item_id": "hw_ds_03",
-        "title": "Assignment 3: Stacks, Queues, and Computational Complexity",
-        "conceptual_type": "Abstract Math & Big-O Proofs",
-        "estimated_duration_minutes": 150,
-        "actual_time_spent_minutes": 310,
-        "editor_tab_switches_before_completion": 24,
-        "grade_received": "C+",
-        "completion_status": "Success (Pushed right at deadline)",
-        "velocity_drift_multiplier": 2.06
-      }
-    ],
-    "current_stalled_item_telemetry": {
-      "item_id": "hw_ds_04",
-      "title": "Assignment 4: Binary Search Trees & Recursive Balance Proofs",
-      "conceptual_type": "Abstract Math & Complex Algorithms",
-      "estimated_duration_minutes": 210,
-      "accumulated_logged_time_minutes": 35,
-      "current_tab_switches_without_code_changes": 6,
-      "projected_velocity_drift_multiplier": 2.15
+  "user_id": "usr_000000000001",
+  "historical_trends": {
+    "gpa_cumulative": 3.12,
+    "global_velocity_multiplier": 2.0,
+    "procrastination_index": "High (Freezes on abstract math and manual pointer execution)",
+    "past_grades": [
+      { "code": "CMPT-1101", "name": "Introduction to OOP", "grade": "A-" },
+      { "code": "CMPT-1201", "name": "Discrete Mathematics", "grade": "B" },
+      { "code": "MATH-1250", "name": "Calculus I", "grade": "C+" }
+    ]
+  },
+  "historical_baseline_metrics": [
+    {
+      "item_id": "hw_ds_01",
+      "title": "Assignment 1: Object-Oriented Review & Array Lists",
+      "conceptual_type": "Practical Coding",
+      "estimated_duration_minutes": 120,
+      "actual_time_spent_minutes": 145,
+      "editor_tab_switches_before_completion": 4,
+      "grade_received": "A-",
+      "velocity_drift_multiplier": 1.2
+    },
+    {
+      "item_id": "hw_ds_02",
+      "title": "Assignment 2: Linked Lists & Manual Pointer Logic",
+      "conceptual_type": "Abstract Math & Pointers",
+      "estimated_duration_minutes": 180,
+      "actual_time_spent_minutes": 340,
+      "editor_tab_switches_before_completion": 19,
+      "grade_received": "B-",
+      "velocity_drift_multiplier": 1.88
+    },
+    {
+      "item_id": "hw_ds_03",
+      "title": "Assignment 3: Stacks, Queues, and Computational Complexity",
+      "conceptual_type": "Abstract Math & Big-O Proofs",
+      "estimated_duration_minutes": 150,
+      "actual_time_spent_minutes": 310,
+      "editor_tab_switches_before_completion": 24,
+      "grade_received": "C+",
+      "velocity_drift_multiplier": 2.06
     }
-  }
+  ]
 }
