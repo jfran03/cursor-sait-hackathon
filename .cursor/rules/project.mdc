@@ -1,0 +1,87 @@
+---
+description: Halo project context — what we're building, the demo scenario, stack, and ownership. Read this before making any changes.
+alwaysApply: true
+---
+
+# Halo — Project Context
+
+## What We're Building
+
+**Halo** is a personal AI system that detects drift — the gap between what you said matters to you and where your time is actually going — and surfaces it before it's too late to recover.
+
+Not a task manager. A personal compass.
+
+**Deadline:** 2026-05-24 11:00 AM
+
+---
+
+## The Problem
+
+People make small, reasonable daily decisions — accepting invitations, helping others, taking on extra work — that individually feel justified but collectively pull them away from their real goals. The drift is invisible until it's too late.
+
+---
+
+## Demo Scenario: Alex
+
+Alex is a second-year CS student with two stated goals: finish Data Structures with a B+, publish a research paper.
+
+This week Alex accepted 5 unplanned commitments. DS homework is due tomorrow. Research paper untouched for 12 days.
+
+**What the demo shows (in order):**
+1. Alex logs in — Halo surfaces: *"9 unplanned hours this week. Research paper: 0 hours in 12 days."*
+2. DS homework flagged as stalled — Halo breaks it into 4 chunks with time boxes
+3. Halo generates tonight's priority list calibrated to Alex's real pace
+4. Session close: *"3 hours protected for your goals tonight. You're back on track."*
+
+The demo runs on pre-seeded data. All AI outputs must feel specific and earned — not generic.
+
+---
+
+## The Three Features
+
+### 1. Drift Detection
+Compares stated goals vs. actual commitment log. Surfaces the gap with real numbers.
+
+### 2. Adaptive Priority List
+Claude generates a ranked tonight-list based on deadline, relative goal impact, and the user's historical pace on similar task types.
+
+### 3. Procrastination → Decomposition
+Stall signals (visited often, no updates, pushed repeatedly) trigger task decomposition into smaller actionable chunks + a nudge to start the first one.
+
+---
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Frontend | React + Next.js (App Router) |
+| Backend | Next.js API routes (`/app/api`) — Vercel serverless |
+| Database | Supabase (Postgres) |
+| AI | Claude API (Anthropic) — structured outputs, not raw chat |
+| Deployment | Vercel |
+
+---
+
+## Ownership
+
+| Person | Owns |
+|---|---|
+| Jerome | Claude API integration, drift logic, structured outputs, prompts |
+| BR | System architecture, API route design, backend |
+| LN | Supabase schema, data layer, demo data seeding |
+| DS | Frontend — task input, drift view, priority list, decomposition card |
+
+---
+
+## Out of Scope
+
+Do not build: calendar integration, mobile app, multi-user features, real-time external ingestion, push notifications.
+
+---
+
+## Engineering Standards
+
+- All Claude outputs must be structured (typed response schema, not raw strings)
+- Validate at the AI boundary — never trust raw LLM output directly in the UI
+- Seed demo data before the sprint ends — do not rely on live input for the demo
+- Deploy to Vercel and smoke-test before submission. "It works locally" is not done.

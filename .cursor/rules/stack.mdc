@@ -1,0 +1,52 @@
+---
+description: Stack conventions and code standards for Halo. Apply whenever writing or reviewing code.
+alwaysApply: true
+---
+
+# Stack Conventions — Halo
+
+## Next.js (App Router)
+
+- All routes under `app/` — no `pages/` directory
+- API routes under `app/api/` as Route Handlers (`route.ts`)
+- Use Server Components by default; add `"use client"` only when needed (event handlers, hooks)
+- No hardcoded secrets — all keys via environment variables
+
+## Supabase
+
+- Schema defined via migrations, not the dashboard UI
+- Use the Supabase JS client (`@supabase/supabase-js`) server-side in API routes
+- Row Level Security (RLS) on all tables — even for a demo build
+- Seed demo data via a script (`scripts/seed.ts`), not manual inserts
+
+## Claude API
+
+- Use the `@anthropic-ai/sdk` package
+- Always define a typed response schema and use structured outputs — never parse raw strings
+- Validate the structured output at the API boundary before passing to the frontend
+- Keep system prompts in `lib/prompts/` as typed constants, not inline strings
+- Use `claude-sonnet-4-6` as the default model
+
+## TypeScript
+
+- Strict mode on — no `any` types
+- Define shared types in `lib/types.ts`
+- Zod for runtime validation at API boundaries
+
+## Environment Variables
+
+Required in `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+ANTHROPIC_API_KEY=
+```
+
+Never commit `.env.local`. Confirm `.gitignore` includes it before first commit.
+
+## Deployment
+
+- Deploy target: Vercel
+- Set all env vars in Vercel dashboard before deploying
+- Smoke-test the deployed URL — not just local — before the demo
