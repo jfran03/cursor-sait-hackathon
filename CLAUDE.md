@@ -23,19 +23,31 @@
 - **Hackathon:** Cursor Calgary @ SAIT
 - **Theme:** Build something that solves a real pain point in your personal life
 - **Deadline:** 2026-05-24 11:00 AM
-- **Judging criteria (ranked):**
+- **Judging pipeline:** 2-phase — AI screening (all teams, Claude) → top 8 advance to human judges
 
-| Criterion | Weight |
-|---|---|
-| Innovation | 25% |
-| Technical Execution | 20% |
-| Functional Completeness | 20% |
-| Problem-Solution Fit | 20% |
-| UX | 5% |
-| Demo | 5% |
-| Ambition | 5% |
+**Phase 2 — AI Screening Criteria:**
 
-**Takeaway:** Innovation + Problem-Solution Fit = 45% of the score. The idea and its fit matter more than anything else. Technical execution and completeness together are 40% — it needs to actually work.
+| Criterion | Weight | What it means |
+|---|---|---|
+| Innovation & Originality | 25% | How novel and surprising is the concept? |
+| Technical Execution | 20% | Cleverness of the engineering |
+| Functional Completeness | 20% | Does the core loop actually work? |
+| Problem-Solution Fit | 20% | Solving a real problem convincingly |
+| UX & Design | 5% | Visual polish and usability |
+| Demo & Communication | 5% | How clearly the project is presented |
+| Learning & Ambition | 5% | Did the team stretch themselves? |
+
+**Phase 3 — Final Round Criteria (human judges, score out of 10):**
+
+| Criterion | Weight | Description |
+|---|---|---|
+| Innovation & Originality | 25% | Creative, fresh, unexpected approach — combined tools in a new way or built something meaningfully different |
+| Technical Execution | **25%** | Strong implementation — reliable functionality, clever architecture, clean AI integrations, ambitious features actually built |
+| Functional Completeness | 20% | Core experience works end-to-end — not spread across unfinished pieces |
+| Problem-Solution Fit | **15%** | Solves a real, clearly defined problem for a specific user |
+| Demo & Communication | 5% | Explains problem, solution, technical approach, and what was built |
+
+**Takeaway:** To pass AI screening, Innovation + Problem-Solution Fit = 45%. To win the final round, Technical Execution jumps to 25% (tied with Innovation). Engineer the hell out of it once you make top 8.
 
 - **Judges:**
 

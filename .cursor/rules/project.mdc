@@ -79,6 +79,35 @@ Do not build: calendar integration, mobile app, multi-user features, real-time e
 
 ---
 
+## How Judging Works — Read This
+
+Judging is **two-phase**. Every team is AI-screened first. Top 8 advance to human judges.
+
+### Phase 2 — AI Screening (Claude, 6 passes)
+
+| Pass | What Claude looks for |
+|---|---|
+| 1 — Repo Archaeology | Tech stack, template detection, **commit history metadata**, README summary, key files |
+| 2 — Code Deep Dive | Clever solutions, novel API use, architectural decisions. Does NOT penalize messy code or missing tests. |
+| 3 — Innovation Audit | Checks against 13 common archetypes (LangChain+Pinecone CRUD, basic todo apps, boilerplate chatbots). Scores "senior engineer surprise factor." |
+| 4 — Visual/UX Review | Reviews **up to 5 screenshots**. No screenshots = UX score of 0. |
+| 5 — Pool Comparison | Ranks us against all other submissions |
+| 6 — Synthesis | Opus + 8k thinking budget. 9–10 = exceptional. Missing UI or no demo = 1–4. |
+
+### What this means for the build
+
+- **Write a real README** — Pass 1 reads it. Explain what Halo is, the problem, the stack, how to run it.
+- **Commit throughout the sprint** — commit history is analyzed. One dump commit at the end looks like a template clone.
+- **Upload 5 screenshots before deadline** — if we skip this, UX = 0 on Pass 4.
+- **Do not let Halo look like a todo app** — the Innovation Audit (Pass 3) checks for exactly this. The drift detection framing must be clear from the repo and README.
+- **Deploy and submit the demo URL** — Demo & Communication is 5% and requires a working URL.
+- **The Synthesis pass uses Opus with extended thinking** — shallow implementations won't survive it. The architecture needs to be real.
+
+### Phase 3 — Final Round (Top 8 only, human judges)
+Technical Execution rises to **25%** (from 20% in AI screening). If we make top 8, the engineering quality is what wins.
+
+---
+
 ## Engineering Standards
 
 - All Claude outputs must be structured (typed response schema, not raw strings)
