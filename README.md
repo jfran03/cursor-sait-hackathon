@@ -65,4 +65,3 @@ Contact / Troubleshooting
 
 If the prompts fail or the model returns malformed output, the API will fall back to mock responses. For other issues, check server logs and ensure .env.local is correct.
 
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
