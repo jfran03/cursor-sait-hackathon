@@ -86,6 +86,7 @@ const captionUpper: React.CSSProperties = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Home() {
+  const [showLanding, setShowLanding] = useState(true);
   const [step, setStep]               = useState<Step>("intro");
   const [demoStarted, setDemoStarted] = useState(false);
   const [drift, setDrift]             = useState<DriftResponse | null>(null);
@@ -144,6 +145,7 @@ export default function Home() {
 
   function resetDemo() {
     clearPhoneSequence();
+    setShowLanding(true);
     setStep("intro");
     setDemoStarted(false);
     setDrift(null);
@@ -252,11 +254,120 @@ export default function Home() {
     decompose:  "Close session",
     summary:    "Start over",
   };
+  const loadingLabel: Record<Step, string> = {
+    intro:      "Loading…",
+    request:    "Calculating drift…",
+    drift:      "Building tonight's plan…",
+    priorities: "Breaking down your work…",
+    decompose:  "Finishing up…",
+    summary:    "Resetting…",
+  };
 
   const unplannedHours = alexData.commitments.filter(c => !c.is_goal_directed).reduce((s, c) => s + c.hours, 0);
 
   return (
     <>
+    <AnimatePresence mode="wait">
+    {showLanding ? (
+      <motion.div
+        key="landing"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, y: -16, filter: "blur(8px)" }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        style={{ minHeight: "100vh", background: t.canvas, overflow: "hidden", position: "relative", display: "flex", flexDirection: "column" }}
+      >
+        {/* Atmospheric orbs */}
+        <div className="orb" style={{ width: 560, height: 560, top: -160, right: -100, background: `radial-gradient(circle, ${t.orbMint}, transparent)`, opacity: 0.5 }} />
+        <div className="orb" style={{ width: 420, height: 420, bottom: 60, left: -160, background: `radial-gradient(circle, ${t.orbPeach}, transparent)`, opacity: 0.42, animationDelay: "7s" }} />
+        <div className="orb" style={{ width: 320, height: 320, top: "40%", left: "40%", background: `radial-gradient(circle, ${t.orbLavender}, transparent)`, opacity: 0.30, animationDelay: "14s" }} />
+
+        {/* Wordmark top-left */}
+        <div style={{ position: "relative", padding: "22px 40px" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.96px", textTransform: "uppercase", color: t.mutedSoft }}>Halo</span>
+        </div>
+
+        {/* Center stage */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 24px 80px", position: "relative" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}
+          >
+            {/* Logotype */}
+            <h1 style={{
+              fontFamily: "var(--font-eb-garamond), serif",
+              fontSize: "clamp(72px, 12vw, 112px)",
+              fontWeight: 400,
+              color: t.ink,
+              letterSpacing: "-0.04em",
+              lineHeight: 1,
+              margin: 0,
+            }}>
+              Halo
+            </h1>
+
+            {/* Motto */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: "easeOut", delay: 0.38 }}
+              style={{
+                fontFamily: "var(--font-eb-garamond), serif",
+                fontSize: "clamp(16px, 2.4vw, 22px)",
+                fontWeight: 400,
+                color: t.muted,
+                letterSpacing: "0.01em",
+                margin: 0,
+                fontStyle: "italic",
+              }}
+            >
+              Amplifying Human Potential
+            </motion.p>
+
+            {/* Divider */}
+            <motion.div
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
+              style={{ width: 40, height: 1, background: t.hairlineStrong, transformOrigin: "center" }}
+            />
+
+            {/* CTA */}
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: "easeOut", delay: 0.72 }}
+              whileHover={{ background: t.ink, scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowLanding(false)}
+              style={{
+                marginTop: 4,
+                padding: "13px 36px",
+                borderRadius: 9999,
+                border: "none",
+                background: t.primary,
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 500,
+                letterSpacing: "0.08px",
+                cursor: "pointer",
+                boxShadow: "0 4px 20px rgba(41,37,36,0.18)",
+              }}
+            >
+              See the demo →
+            </motion.button>
+          </motion.div>
+        </div>
+      </motion.div>
+    ) : (
+    <motion.div
+      key="app"
+      initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
     <div style={{ minHeight: "100vh", background: t.canvas, overflow: "hidden", position: "relative" }}>
 
       {/* Atmospheric orbs */}
@@ -364,7 +475,13 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
-                  style={{ fontSize: 12, color: dk.textMuted, position: "absolute", whiteSpace: "nowrap" }}
+                  style={{
+                    fontSize: 12,
+                    color: step === "drift" ? dk.mint : dk.textMuted,
+                    fontStyle: step === "drift" ? "italic" : "normal",
+                    position: "absolute",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {stepLabel[step]}
                 </motion.span>
@@ -441,13 +558,16 @@ export default function Home() {
                         transition={{ layout: layoutTween }}
                         style={{ paddingTop: 8, paddingBottom: 20 }}
                       >
+                        <AnimatePresence>
+                          {loading && <LoadingLine key="req-loading-line" />}
+                        </AnimatePresence>
                         <motion.div
                           initial={false}
                           animate={{ opacity: reqCTA ? 1 : 0, y: reqCTA ? 0 : 6 }}
                           transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
                           style={{ pointerEvents: reqCTA ? "auto" : "none" }}
                         >
-                          <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel["request"]} />
+                          <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel["request"]} loadingText={loadingLabel["request"]} />
                         </motion.div>
                       </motion.div>
                     </motion.div>
@@ -573,7 +693,10 @@ export default function Home() {
                 transition={{ duration: 0.22, ease: "easeOut", layout: layoutTween }}
                 style={{ padding: "16px 20px 20px" }}
               >
-                <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel[step]} />
+                <AnimatePresence>
+                  {loading && <LoadingLine key="loading-line" />}
+                </AnimatePresence>
+                <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel[step]} loadingText={loadingLabel[step]} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -586,6 +709,9 @@ export default function Home() {
         )}
       </main>
     </div>
+    </motion.div>
+    )}
+    </AnimatePresence>
 
     {nudgeData && (
       <PopupNudge
@@ -911,7 +1037,26 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function OverlayBtn({ onClick, loading, label }: { onClick: () => void; loading: boolean; label: string }) {
+function LoadingLine() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ marginBottom: 10, borderRadius: 2, overflow: "hidden", height: 2, background: dk.border }}
+    >
+      <motion.div
+        style={{ height: "100%", width: "35%", background: dk.mint, borderRadius: 2 }}
+        initial={{ x: "-100%" }}
+        animate={{ x: "300%" }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+      />
+    </motion.div>
+  );
+}
+
+function OverlayBtn({ onClick, loading, label, loadingText = "Analyzing…" }: { onClick: () => void; loading: boolean; label: string; loadingText?: string }) {
   return (
     <motion.button
       onClick={onClick}
@@ -934,7 +1079,7 @@ function OverlayBtn({ onClick, loading, label }: { onClick: () => void; loading:
             animate={{ rotate: 360 }}
             transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
           />
-          Analyzing…
+          {loadingText}
         </>
       ) : (
         `${label} →`
