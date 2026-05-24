@@ -7,7 +7,7 @@ import scheduleData from "@/data/demo/schedule.json";
 import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
 import pastWorkHistory from "@/data/demo/pastWorkHistory.json";
 import humanLogs from "@/data/demo/humanLogs.json";
-import PopupNudge from "@/components/PopupNudge";
+import ShellNudge from "@/components/ShellNudge";
 import IntroScreen from "@/components/preamble/IntroScreen";
 import CalendarDeliberation from "@/components/preamble/CalendarDeliberation";
 import TaskDecomposePanel from "@/components/preamble/TaskDecomposePanel";
@@ -60,6 +60,43 @@ const panelTransition = { duration: 0.28, ease: "easeOut" as const };
 const panelExitTransition = { duration: 0.2, ease: "easeIn" as const };
 const layoutTween = { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const };
 
+// Panels emerge from the phone center, then settle left (calendar) or right (overlay).
+const PHONE_PANEL_GAP = 16;
+const PHONE_WIDTH = 264;
+const CALENDAR_WIDTH = 340;
+const OVERLAY_WIDTH = 380;
+const slideFromPhoneEase = [0.22, 1, 0.36, 1] as const;
+const calendarFromPhoneX = PHONE_PANEL_GAP + PHONE_WIDTH / 2 + CALENDAR_WIDTH / 2;
+const overlayFromPhoneX = -(PHONE_PANEL_GAP + PHONE_WIDTH / 2 + OVERLAY_WIDTH / 2);
+const slideFromPhoneTransition = { duration: 0.58, ease: slideFromPhoneEase };
+
+// Jordan → Halo overlay → calendar (left panel) demo sequence
+const JORDAN_MESSAGE_MS = 1400;
+const OVERLAY_AFTER_MESSAGE_MS = 1800;
+const CALENDAR_AFTER_OVERLAY_MS = 1500;
+const CALENDAR_SHELL_TO_CONTENT_MS = 320;
+const WEEK_VIEW_DWELL_MS = 2700;
+const DELIBERATE_AFTER_DAY_MS = 1800;
+const OVERLAY_BODY_DELAY_MS = 430;
+const OVERLAY_CTA_DELAY_MS = 1080;
+
+function jordanDemoTiming() {
+  const overlayAt = JORDAN_MESSAGE_MS + OVERLAY_AFTER_MESSAGE_MS;
+  const calendarAt = overlayAt + CALENDAR_AFTER_OVERLAY_MS;
+  const calendarContentAt = calendarAt + CALENDAR_SHELL_TO_CONTENT_MS;
+  const dayZoomAt = calendarContentAt + WEEK_VIEW_DWELL_MS;
+  const deliberateAt = dayZoomAt + DELIBERATE_AFTER_DAY_MS;
+  return {
+    overlayAt,
+    calendarAt,
+    calendarContentAt,
+    dayZoomAt,
+    deliberateAt,
+    bodyAt: overlayAt + OVERLAY_BODY_DELAY_MS,
+    ctaAt: overlayAt + OVERLAY_CTA_DELAY_MS,
+  };
+}
+
 const staggerList = {
   hidden: {},
   show:   { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
@@ -109,7 +146,10 @@ export default function Home() {
   const [reqBody,        setReqBody]        = useState(false);
   const [reqCTA,         setReqCTA]         = useState(false);
   const [calendarPhase,  setCalendarPhase]  = useState<CalendarPhase>("week");
-  const [nudgeShown,     setNudgeShown]     = useState(false);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [calendarContentReady, setCalendarContentReady] = useState(false);
+  const [driftReady, setDriftReady] = useState(false);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const phoneSequenceRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const schedule = scheduleData as Schedule;
 
@@ -163,26 +203,28 @@ export default function Home() {
     setReqBody(false);
     setReqCTA(false);
     setCalendarPhase("week");
-    setNudgeShown(false);
+    setCalendarVisible(false);
+    setCalendarContentReady(false);
+    setDriftReady(false);
+    setNudgeDismissed(false);
     setNudgeData(null);
     setFocusTimerOpen(false);
     setFocusTaskTitle(undefined);
   }
 
-  // Jordan sequence: week calendar → zoom to today → deliberate → message → Halo overlay.
+  // Jordan sequence: message → Before you reply overlay. Calendar appears on button press.
   useEffect(() => {
     if (!demoStarted) return;
+    const t = jordanDemoTiming();
     setCalendarPhase("week");
-    const tDay       = setTimeout(() => setCalendarPhase("day"), 900);
-    const tMsg       = setTimeout(() => setMessageArrived(true), 1400);
-    const tDeliberate = setTimeout(() => setCalendarPhase("deliberate"), 1800);
-    const tOverlay   = setTimeout(() => setOverlayVisible(true), 2600);
-    const tBody      = setTimeout(() => setReqBody(true), 3030);
-    const tCTA       = setTimeout(() => setReqCTA(true), 4380);
+    setCalendarVisible(false);
+    setCalendarContentReady(false);
+    const tMsg     = setTimeout(() => setMessageArrived(true), JORDAN_MESSAGE_MS);
+    const tOverlay = setTimeout(() => setOverlayVisible(true), t.overlayAt);
+    const tBody    = setTimeout(() => setReqBody(true), t.bodyAt);
+    const tCTA     = setTimeout(() => setReqCTA(true), t.ctaAt);
     return () => {
-      clearTimeout(tDay);
       clearTimeout(tMsg);
-      clearTimeout(tDeliberate);
       clearTimeout(tOverlay);
       clearTimeout(tBody);
       clearTimeout(tCTA);
@@ -195,27 +237,6 @@ export default function Home() {
     const t = setTimeout(() => setAlexReplied(true), 1200);
     return () => clearTimeout(t);
   }, [step]);
-
-  // Proactive nudge mid-demo — after tonight's plan is generated (not on first load).
-  useEffect(() => {
-    if (step !== "priorities" || !priorities || nudgeShown) return;
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/nudge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telemetry, humanLogs, demo_mode: demoMode }),
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.nudge && !data.do_not_disturb) {
-          setNudgeData(data);
-          setNudgeShown(true);
-        }
-      } catch {}
-    }, 2200);
-    return () => clearTimeout(timer);
-  }, [step, priorities, nudgeShown, demoMode]);
 
   function toggleDemoMode() {
     const next = !demoMode;
@@ -230,7 +251,17 @@ export default function Home() {
 
   async function handleNext() {
     if (step === "request") {
+      if (driftReady) {
+        // User clicked "View Summary" — advance to drift
+        setStep("drift");
+        return;
+      }
       setLoading(true);
+      // Show calendar when "Analyze my week" is pressed
+      setCalendarVisible(true);
+      setTimeout(() => setCalendarContentReady(true), CALENDAR_SHELL_TO_CONTENT_MS);
+      const tDay        = setTimeout(() => setCalendarPhase("day"), CALENDAR_SHELL_TO_CONTENT_MS + WEEK_VIEW_DWELL_MS);
+      const tDeliberate = setTimeout(() => setCalendarPhase("deliberate"), CALENDAR_SHELL_TO_CONTENT_MS + WEEK_VIEW_DWELL_MS + DELIBERATE_AFTER_DAY_MS);
       const data = await post<DriftResponse>("/api/drift", {
         goals: alexData.goals,
         commitments: alexData.commitments,
@@ -238,13 +269,30 @@ export default function Home() {
         pastWorkHistory,
         drift_context: alexData.drift_context,
       });
+      clearTimeout(tDay);
+      clearTimeout(tDeliberate);
       setDrift(data);
-      setStep("drift");
+      setDriftReady(true);
       setLoading(false);
+      // Stay on "request" step — user must press "View Summary" to continue
     } else if (step === "drift") {
       setLoading(true);
-      const data = await post<PriorityListResponse>("/api/priorities", { goals: alexData.goals, commitments: alexData.commitments });
+      const [data, nudgeRes] = await Promise.all([
+        post<PriorityListResponse>("/api/priorities", { goals: alexData.goals, commitments: alexData.commitments }),
+        post<{ nudge: string; severity: string; do_not_disturb?: boolean }>("/api/nudge", {
+          telemetry,
+          humanLogs,
+          demo_mode: demoMode,
+        }),
+      ]);
       setPriorities(data);
+      if (nudgeRes?.nudge && !nudgeRes.do_not_disturb) {
+        setNudgeData(nudgeRes);
+        setNudgeDismissed(false);
+      } else {
+        setNudgeData(null);
+        setNudgeDismissed(true);
+      }
       setStep("priorities");
       setLoading(false);
     } else if (step === "priorities") {
@@ -284,6 +332,8 @@ export default function Home() {
   };
 
   const unplannedHours = alexData.commitments.filter(c => !c.is_goal_directed).reduce((s, c) => s + c.hours, 0);
+  const showShellNudge = step === "priorities" && !!nudgeData && !nudgeDismissed;
+  const overlayStepLabel = showShellNudge ? "Halo nudge" : stepLabel[step];
 
   return (
     <>
@@ -443,19 +493,45 @@ export default function Home() {
           />
         ) : (
         <LayoutGroup id="halo-stage">
-        <AnimatePresence mode="popLayout">
-          {phoneVisible && step === "request" && (
-            <CalendarDeliberation
-              key="calendar"
-              schedule={schedule}
-              goals={alexData.goals as Goal[]}
-              pastWorkHistory={pastWorkHistory}
-              telemetry={telemetry}
-              phase={calendarPhase}
-            />
+        <div style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: step === "request" ? 1120 : undefined,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: step === "request" ? 0 : 40,
+          flexWrap: step === "request" ? "nowrap" : "wrap",
+          minHeight: step === "request" ? 460 : undefined,
+        }}>
+        <AnimatePresence>
+          {phoneVisible && step === "request" && calendarVisible && (
+            <motion.div
+              key="calendar-slot"
+              initial={{ opacity: 0, x: calendarFromPhoneX, y: "-50%", filter: "blur(10px)" }}
+              animate={{ opacity: 1, x: 0, y: "-50%", filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: calendarFromPhoneX * 0.4, y: "-50%", filter: "blur(8px)" }}
+              transition={slideFromPhoneTransition}
+              style={{
+                position: "absolute",
+                right: "calc(50% + 148px)",
+                top: "50%",
+                zIndex: 1,
+              }}
+            >
+              <CalendarDeliberation
+                schedule={schedule}
+                goals={alexData.goals as Goal[]}
+                pastWorkHistory={pastWorkHistory}
+                telemetry={telemetry}
+                phase={calendarPhase}
+                contentReady={calendarContentReady}
+              />
+            </motion.div>
           )}
         </AnimatePresence>
 
+        <div style={{ position: "relative", zIndex: 2, flexShrink: 0 }}>
         <AnimatePresence mode="popLayout">
           {phoneVisible && (
             <PhoneMockup
@@ -467,16 +543,39 @@ export default function Home() {
             />
           )}
         </AnimatePresence>
+        </div>
 
-        {/* ── Halo overlay — appears after phone hangs centered post-message ── */}
+        {/* ── Halo overlay — request: slides in from right; later steps: from below ── */}
         <AnimatePresence>
         {overlayVisible && (
         <LayoutGroup id="halo-overlay">
+        <div
+          style={
+            step === "request"
+              ? {
+                  position: "absolute",
+                  left: "calc(50% + 148px)",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  zIndex: 1,
+                }
+              : undefined
+          }
+        >
         <motion.div
           layout
-          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0,  filter: "blur(0px)"  }}
-          transition={{ duration: 0.18, ease: "easeOut", layout: layoutTween }}
+          initial={
+            step === "request"
+              ? { opacity: 0, x: overlayFromPhoneX, filter: "blur(10px)" }
+              : { opacity: 0, y: 24, filter: "blur(10px)" }
+          }
+          animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
+          exit={step === "request" ? { opacity: 0, x: overlayFromPhoneX * 0.35 } : { opacity: 0, y: 12 }}
+          transition={
+            step === "request"
+              ? slideFromPhoneTransition
+              : { duration: 0.18, ease: "easeOut", layout: layoutTween }
+          }
           style={{
           width: 380, flexShrink: 0,
           background: dk.bg,
@@ -503,7 +602,7 @@ export default function Home() {
             <div style={{ position: "relative", height: 18, flex: 1, overflow: "hidden" }}>
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={step}
+                  key={overlayStepLabel}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
@@ -516,7 +615,7 @@ export default function Home() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {stepLabel[step]}
+                  {overlayStepLabel}
                 </motion.span>
               </AnimatePresence>
             </div>
@@ -600,7 +699,7 @@ export default function Home() {
                           transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
                           style={{ pointerEvents: reqCTA ? "auto" : "none" }}
                         >
-                          <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel["request"]} loadingText={loadingLabel["request"]} />
+                          <OverlayBtn onClick={handleNext} loading={loading} label={driftReady ? "View Summary" : nextLabel["request"]} loadingText={loadingLabel["request"]} />
                         </motion.div>
                       </motion.div>
                     </motion.div>
@@ -638,7 +737,17 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {step === "priorities" && priorities && (
+              {showShellNudge && nudgeData && (
+                <ShellNudge
+                  key="shell-nudge"
+                  nudge={nudgeData.nudge}
+                  severity={nudgeData.severity}
+                  onDismiss={() => setNudgeDismissed(true)}
+                  onStartFocus={() => openFocusTimer(0)}
+                />
+              )}
+
+              {step === "priorities" && priorities && !showShellNudge && (
                 <motion.div key="priorities" initial={panelHidden} animate={panelIn} exit={panelOut} transition={panelTransition}
                   style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -718,7 +827,7 @@ export default function Home() {
 
           {/* CTA — request step handles its own CTA inside the body; only non-request steps use this */}
           <AnimatePresence>
-            {step !== "request" && (
+            {step !== "request" && !showShellNudge && (
               <motion.div
                 key={step}
                 layout
@@ -735,9 +844,11 @@ export default function Home() {
           </AnimatePresence>
 
         </motion.div>
+        </div>
         </LayoutGroup>
         )}
         </AnimatePresence>
+        </div>
         </LayoutGroup>
         )}
       </main>
@@ -745,15 +856,6 @@ export default function Home() {
     </motion.div>
     )}
     </AnimatePresence>
-
-    {nudgeData && (
-      <PopupNudge
-        nudge={nudgeData.nudge}
-        severity={nudgeData.severity}
-        onClose={() => setNudgeData(null)}
-        onStartFocus={() => openFocusTimer(0)}
-      />
-    )}
 
     <FocusTimer
       open={focusTimerOpen}
