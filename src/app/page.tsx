@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import alexData from "@/data/demo/userProfile.json";
 import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
 import humanLogs from "@/data/demo/humanLogs.json";
@@ -127,7 +127,7 @@ export default function Home() {
   }
 
   // Check for proactive nudge on page load (demo: short-poll once)
-  React.useEffect(() => {
+  useEffect(() => {
     async function checkNudge(){
       try {
         const res = await fetch('/api/nudge', {
