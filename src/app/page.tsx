@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import alexData from "@/lib/demo/alex.json";
+import alexData from "@/data/demo/userProfile.json";
 import type { DriftResponse, PriorityListResponse, DecomposeResponse } from "@/lib/types";
 
 type Step = "request" | "drift" | "priorities" | "decompose" | "summary";
