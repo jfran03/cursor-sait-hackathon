@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import alexData from "@/data/demo/userProfile.json";
+import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
+import humanLogs from "@/data/demo/humanLogs.json";
+import PopupNudge from "@/components/PopupNudge";
 import type { DriftResponse, PriorityListResponse, DecomposeResponse } from "@/lib/types";
 
 type Step = "request" | "drift" | "priorities" | "decompose" | "summary";
@@ -69,6 +72,7 @@ export default function Home() {
   const [priorities, setPriorities] = useState<PriorityListResponse | null>(null);
   const [decompose, setDecompose] = useState<DecomposeResponse | null>(null);
   const [loading, setLoading]     = useState(false);
+  const [nudgeData, setNudgeData] = useState<{nudge:string,severity:string,do_not_disturb?:boolean}|null>(null);
 
   async function post<T>(url: string, body: object): Promise<T> {
     const res = await fetch(url, {
@@ -118,6 +122,25 @@ export default function Home() {
     setPriorities(null);
     setDecompose(null);
   }
+
+  // Check for proactive nudge on page load (demo: short-poll once)
+  React.useEffect(() => {
+    async function checkNudge(){
+      try {
+        const res = await fetch('/api/nudge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telemetry: telemetry, humanLogs: humanLogs }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.nudge && !data.do_not_disturb) setNudgeData(data);
+      } catch (e) {
+        console.error('nudge check failed', e);
+      }
+    }
+    checkNudge();
+  }, []);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", background: t.canvas, color: t.body }}>
@@ -295,6 +318,7 @@ export default function Home() {
           </Section>
         )}
 
+      {nudgeData && <PopupNudge nudge={nudgeData.nudge} severity={nudgeData.severity} onClose={() => setNudgeData(null)} />}
       </div>
     </div>
   );
