@@ -1,0 +1,44 @@
+{
+  "drift": {
+    "unplanned_hours": 9,
+    "goal_directed_hours": 3,
+    "stalled_goals": [
+      { "goal_title": "Publish a research paper", "days_since_activity": 12 },
+      { "goal_title": "Finish Data Structures with a B+", "days_since_activity": 2 }
+    ],
+    "message": "9 unplanned hours this week. Research paper: 0 hours in 12 days."
+  },
+  "priorities": {
+    "items": [
+      {
+        "title": "DS homework — algorithm implementation",
+        "goal": "Finish Data Structures with a B+",
+        "estimated_minutes": 60,
+        "rationale": "High urgency (due tomorrow) and short focused win to preserve grade."
+      },
+      {
+        "title": "Draft outline: research paper intro",
+        "goal": "Publish a research paper",
+        "estimated_minutes": 45,
+        "rationale": "Low activation energy way to make visible progress on the long-term goal."
+      },
+      {
+        "title": "Block email + focus time",
+        "goal": "Finish Data Structures with a B+",
+        "estimated_minutes": 30,
+        "rationale": "Protect contiguous time to complete the DS task."
+      }
+    ],
+    "protected_hours": 3,
+    "closing_message": "3 hours protected for your goals tonight. Start with DS homework for 60 minutes."
+  },
+  "decompose": {
+    "subtasks": [
+      { "title": "Read problem statement and sample I/O", "estimated_minutes": 20 },
+      { "title": "Sketch algorithm & pseudocode", "estimated_minutes": 20 },
+      { "title": "Implement solution in editor", "estimated_minutes": 20 },
+      { "title": "Run tests & fix edge cases", "estimated_minutes": 20 }
+    ],
+    "nudge": "Start the first 20-minute chunk now — set a timer and close distracting tabs."
+  }
+}

@@ -1,8 +1,8 @@
 import OpenAI from "openai";
-import alex from "../lib/demo/alex.json";
-import history from "../lib/demo/historical_work_metadata.json";
-import telemetry from "../lib/demo/telemetry.json";
-import humanLogs from "../lib/demo/human_logs.json";
+import alex from "../data/demo/userProfile.json";
+import history from "../data/demo/pastWorkHistory.json";
+import telemetry from "../data/demo/currentBehaviorTelemetry.json";
+import humanLogs from "../data/demo/humanLogs.json";
 import { DRIFT_SYSTEM_PROMPT } from "../lib/prompts/drift";
 import { PRIORITIES_SYSTEM_PROMPT } from "../lib/prompts/priorities";
 import { DECOMPOSE_SYSTEM_PROMPT } from "../lib/prompts/decompose";
@@ -48,6 +48,8 @@ Historical context:
 - Global velocity multiplier: ${history.historical_trends.global_velocity_multiplier}x (tasks take this much longer than estimated on average)
 - Procrastination index: ${history.historical_trends.procrastination_index}
 
+Behavioral summary: ${alex.drift_context?.behavioral_summary ?? JSON.stringify(alex.drift_context)}
+
 Biometric and spatial context: ${JSON.stringify(humanLogs.biometric_and_spatial)}
 
 Cognitive environment: ${JSON.stringify(telemetry.cognitive_environment)}
@@ -68,7 +70,7 @@ Biometric and spatial context: ${JSON.stringify(humanLogs.biometric_and_spatial)
 
 const decomposeMessage = `
 Stalled task: "${alex.stalled_item.goal_title}"
-Goal it serves: "${alex.goals[1].title}"
+Goal it serves: "${alex.goals.find(g => g.id === alex.stalled_item.goal_id)?.title ?? alex.goals[1].title}"
 
 Live IDE telemetry: ${JSON.stringify(telemetry.ide_telemetry_window_30m)}
 
@@ -77,7 +79,7 @@ Active stalled item data: ${JSON.stringify(telemetry.active_stalled_item)}
 Behavioral friction profile: ${JSON.stringify(telemetry.behavioral_friction)}
 
 Historical performance on similar task types:
-${JSON.stringify(history.assignment_baselines.filter(a => a.conceptual_type.includes("Abstract Math")))}
+${JSON.stringify(history.assignment_baselines)}
 
 Cognitive and biometric state:
 - Fatigue: ${telemetry.cognitive_environment.current_fatigue_level}
