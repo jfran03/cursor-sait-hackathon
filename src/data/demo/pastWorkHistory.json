@@ -1,0 +1,60 @@
+{
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "historical_trends": {
+    "gpa_cumulative": 3.12,
+    "global_velocity_multiplier": 2.0,
+    "procrastination_index": "High (Freezes on abstract math and manual pointer execution)"
+  },
+  "past_grades": [
+    { "code": "CMPT-1101", "name": "Introduction to OOP", "grade": "A-" },
+    { "code": "CMPT-1201", "name": "Discrete Mathematics", "grade": "B" },
+    { "code": "MATH-1250", "name": "Calculus I", "grade": "C+" }
+  ],
+  "assignment_baselines": [
+    {
+      "item_id": "hw_ds_01",
+      "goal_id": "10000000-0000-0000-0000-000000000002",
+      "title": "Assignment 1: Object-Oriented Review & Array Lists",
+      "conceptual_type": "Practical Coding",
+      "estimated_duration_minutes": 120,
+      "actual_time_spent_minutes": 145,
+      "editor_tab_switches_before_completion": 4,
+      "grade_received": "A-",
+      "velocity_drift_multiplier": 1.2
+    },
+    {
+      "item_id": "hw_ds_02",
+      "goal_id": "10000000-0000-0000-0000-000000000002",
+      "title": "Assignment 2: Linked Lists & Manual Pointer Logic",
+      "conceptual_type": "Abstract Math & Pointers",
+      "estimated_duration_minutes": 180,
+      "actual_time_spent_minutes": 340,
+      "editor_tab_switches_before_completion": 19,
+      "grade_received": "B-",
+      "velocity_drift_multiplier": 1.88
+    },
+    {
+      "item_id": "hw_ds_03",
+      "goal_id": "10000000-0000-0000-0000-000000000002",
+      "title": "Assignment 3: Stacks, Queues, and Computational Complexity",
+      "conceptual_type": "Abstract Math & Big-O Proofs",
+      "estimated_duration_minutes": 150,
+      "actual_time_spent_minutes": 310,
+      "editor_tab_switches_before_completion": 24,
+      "grade_received": "C+",
+      "velocity_drift_multiplier": 2.06
+    },
+    {
+      "item_id": "hw_ds_04",
+      "goal_id": "10000000-0000-0000-0000-000000000002",
+      "title": "Assignment 4: Binary Search Trees & Recursive Balance Proofs",
+      "conceptual_type": "Abstract Math & Complex Algorithms",
+      "estimated_duration_minutes": 210,
+      "actual_time_spent_minutes": 35,
+      "editor_tab_switches_before_completion": null,
+      "grade_received": null,
+      "velocity_drift_multiplier": null,
+      "status": "active_stalled"
+    }
+  ]
+}
