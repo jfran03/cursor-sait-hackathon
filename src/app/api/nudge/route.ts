@@ -6,13 +6,15 @@ export async function POST(req: Request) {
     const telemetry = body.telemetry ?? {};
     const humanLogs = body.humanLogs ?? {};
 
-    // Honor suppress flag
-    const suppress = humanLogs?.biometric_and_spatial?.suppress_nudges === true;
+    // Honor suppress flag, unless demo_mode forces override
+    const demo_mode = body.demo_mode === true;
+    const suppressFlag = humanLogs?.biometric_and_spatial?.suppress_nudges === true;
+    const suppress = suppressFlag && !demo_mode;
     if (suppress) {
       return NextResponse.json({ nudge: "", do_not_disturb: true, severity: "none" });
     }
 
-    // Simple deterministic rules for a reliable demo fallback
+    // Simple deterministic rules for a reliable demo fallback (demo_mode can force a nudge)
     const sleepDebt = humanLogs?.biometric_and_spatial?.fitness_tracker?.sleep_debt_accumulated_hours ?? 0;
     const location = humanLogs?.biometric_and_spatial?.spatial?.geofence_tag ?? "unknown location";
     const inferred = humanLogs?.biometric_and_spatial?.current_activity?.inferred_activity ?? "unknown";
