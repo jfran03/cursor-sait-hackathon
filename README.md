@@ -6,16 +6,26 @@ Halo is a web app that detects behavioral drift between a student's stated long-
 
 ---
 
-## The Problem
+## The Problem: The Invisible Drift & The Pain of Regret
 
-A student with real long-term goals (research, coursework, internship applications) faces an endless stream of immediate demands: group project favours, club booth requests, social commitments. Every yes feels reasonable. No one is tracking the cumulative cost. By Friday, they've been busy all week and haven't moved on what actually matters.
+Students with clear, high-conviction long-term goals (research publications, advanced coursework, competitive internship applications) face an endless stream of immediate, competing demands: group project favors, club booth setups, and impromptu social commitments.
+Every single "yes" feels reasonable in isolation—helping a roommate move, taking an extra shift, or staying for one more drink at the pub. Each choice feels harmless in the moment. No traditional tool tracks the cumulative cost of these decisions.
+By Sunday morning, students wake up to the crushing pain of regret. They have been exhausted and "busy" all week, yet they haven't moved the needle on what actually matters to their future. This behavioral drift remains invisible until the deadline passes and it is too late to recover. Traditional task managers fail because they are completely reactive—they only track what you manually tell them to track.
 
 ## What Halo Does
+Halo turns code editors and personal biometrics into a proactive personal compass. It exposes behavioral drift, calculates true cognitive bandwidth, and intercepts self-sabotage before it turns into regret.
 
-1. **Drift detection** — compares stated goal priorities against actual commitment patterns. Surfaces unplanned hours vs. goal-directed hours, flags stalled goals (days without a session), and generates a plain-language drift message.
-2. **Priority generation** — given goals and this week's commitments, produces a tonight-focused priority list with time estimates and rationale.
-3. **Task decomposition** — takes a stalled task (detected via procrastination signals: IDE errors, attention scatter) and breaks it into 4 concrete sub-steps calibrated to the user's historical velocity.
-4. **Proactive nudge** — reads biometric and spatial telemetry (sleep debt, location, inferred activity) and fires a targeted accountability message if the user's context warrants it.
+[Profile + History] ──> [Calibrated Prioritization]
+                              │
+[IDE + Web Logs]    ──> [Procrastination Sensing] ──> [Bite-Sized Chunking]
+                              │
+[Biometrics + GPS]  ──> [Context-Aware Peer Nudge]
+
+🛠️ Core Capabilities
+1. Personalized Prioritization - Halo goes beyond ranking tasks by static due dates; it calibrates your active schedule against your personal cognitive bandwidth and historical work metadata. By parsing historical academic performance, the engine calculates a real-world velocity multiplier per assignment category. If a complex algorithmic proof historically takes you twice as long as the baseline estimate, Halo restructures your evening schedule to reflect your true computational pace, safeguarding your long-term career horizons.
+2. Real-Time Procrastination & Delay Detection - Instead of waiting for an assignment deadline to pass, Halo actively senses the early warning signs of cognitive freezing. By monitoring your live development workspace, the system catches the exact moment you slide into avoidance behavior. If it registers consecutive local compilation failures followed immediately by prolonged activity on distraction domains (e.g., YouTube, Reddit), Halo identifies the underlying frustration loop and triggers a high-friction procrastination alarm.
+3. Overcoming Friction via Bite-Sized Chunking - When a critical task is flagged as stalled, Halo steps in to break the mental freeze. Instead of delivering generic warnings to "finish your project," its AI engine decomposes the overwhelming milestone into hyper-specific, low-friction, bite-sized sub-steps calibrated to your current fatigue levels. For example, if you are stuck on a brutal manual pointer error, Halo replaces the massive goal with an immediate, 20-minute visual scratchpad exercise—mapping the work to your visual strengths to quickly rebuild your momentum.
+4. Proactive Nudging via Spatial & Human Telemetry - Halo bridges the digital and physical worlds by tracking environmental friction using fitness tracker metrics and spatial location data. The system respects your physiological boundaries—suppressing system alerts entirely if you are sleeping or working out at the campus gym. However, if you have been stationary at a local pub geofence for over three hours while a core assignment is stalling and your sleep debt is actively climbing, Halo triggers an immediate, numbers-driven peer intervention to pull you out of the drift.
 
 ---
 
