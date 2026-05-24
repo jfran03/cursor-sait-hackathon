@@ -339,15 +339,20 @@ export default function Home() {
                 <PillBtn onClick={reset} loading={false} label="Start over" outline />
               </div>
 
-              {/* Right column — phone shell */}
-              <div style={{
-                flexShrink: 0,
-                width: 180,
-                background: "#111",
-                borderRadius: 32,
-                padding: "14px 10px 18px",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
-              }}>
+              {/* Right column — phone (materialise) */}
+              <motion.div
+                style={{
+                  flexShrink: 0,
+                  width: 180,
+                  background: "#111",
+                  borderRadius: 32,
+                  padding: "14px 10px 18px",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
+                }}
+                initial={{ scale: 0.88, opacity: 0, filter: "blur(6px)" }}
+                animate={{ scale: 1,    opacity: 1, filter: "blur(0px)" }}
+                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+              >
                 {/* Notch */}
                 <div style={{ width: 48, height: 5, background: "#222", borderRadius: 3, margin: "0 auto 12px" }} />
 
@@ -358,47 +363,53 @@ export default function Home() {
                 </div>
 
                 {/* Notification card */}
-                <div style={{
-                  background: "rgba(30,30,30,0.95)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 16,
-                  padding: "10px 12px",
-                }}>
-                  {/* App header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-                    <div style={{
-                      width: 16, height: 16, borderRadius: 5, flexShrink: 0,
-                      background: "linear-gradient(135deg, #a7e5d3, #c8b8e0)",
-                    }} />
-                    <div>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.3px" }}>HALO</div>
-                    </div>
-                    <div style={{ marginLeft: "auto", fontSize: 8, color: "#555" }}>now</div>
-                  </div>
-
-                  {/* Title */}
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", lineHeight: 1.4, marginBottom: 5 }}>
-                    You&apos;ve been at The Hudson Pub for 3 hours.
-                  </div>
-
-                  {/* Body */}
-                  <div style={{ fontSize: 9, color: "#aaa", lineHeight: 1.5 }}>
-                    Sleep debt: 2.1h · DS assignment due 9 AM · Research paper: 12 days untouched.
-                  </div>
-
-                  {/* CTA */}
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut", delay: 0.45 }}
+                >
                   <div style={{
-                    marginTop: 8, paddingTop: 8,
-                    borderTop: "1px solid rgba(255,255,255,0.06)",
-                    fontSize: 9, fontWeight: 700, color: "#a7e5d3",
+                    background: "rgba(30,30,30,0.95)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 16,
+                    padding: "10px 12px",
                   }}>
-                    Head home now → 3h still recoverable tonight.
+                    {/* App header */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 5, flexShrink: 0,
+                        background: "linear-gradient(135deg, #a7e5d3, #c8b8e0)",
+                      }} />
+                      <div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.3px" }}>HALO</div>
+                      </div>
+                      <div style={{ marginLeft: "auto", fontSize: 8, color: "#555" }}>now</div>
+                    </div>
+
+                    {/* Title */}
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", lineHeight: 1.4, marginBottom: 5 }}>
+                      You&apos;ve been at The Hudson Pub for 3 hours.
+                    </div>
+
+                    {/* Body */}
+                    <div style={{ fontSize: 9, color: "#aaa", lineHeight: 1.5 }}>
+                      Sleep debt: 2.1h · DS assignment due 9 AM · Research paper: 12 days untouched.
+                    </div>
+
+                    {/* CTA */}
+                    <div style={{
+                      marginTop: 8, paddingTop: 8,
+                      borderTop: "1px solid rgba(255,255,255,0.06)",
+                      fontSize: 9, fontWeight: 700, color: "#a7e5d3",
+                    }}>
+                      Head home now → 3h still recoverable tonight.
+                    </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Home indicator */}
                 <div style={{ width: 80, height: 4, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
-              </div>
+              </motion.div>
 
             </div>
           </motion.div>
