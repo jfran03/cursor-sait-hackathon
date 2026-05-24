@@ -339,8 +339,30 @@ export default function Home() {
                 <PillBtn onClick={reset} loading={false} label="Start over" outline />
               </div>
 
-              {/* Right column — phone placeholder */}
-              <div style={{ flexShrink: 0, width: 180, height: 200, background: "#111", borderRadius: 32 }} />
+              {/* Right column — phone shell */}
+              <div style={{
+                flexShrink: 0,
+                width: 180,
+                background: "#111",
+                borderRadius: 32,
+                padding: "14px 10px 18px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
+              }}>
+                {/* Notch */}
+                <div style={{ width: 48, height: 5, background: "#222", borderRadius: 3, margin: "0 auto 12px" }} />
+
+                {/* Lock screen time */}
+                <div style={{ textAlign: "center", marginBottom: 10 }}>
+                  <div style={{ fontSize: 28, fontWeight: 200, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1 }}>10:42</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Friday, May 23</div>
+                </div>
+
+                {/* Notification card placeholder */}
+                <div style={{ background: "rgba(30,30,30,0.95)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", padding: "10px 12px", minHeight: 80 }} />
+
+                {/* Home indicator */}
+                <div style={{ width: 80, height: 4, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
+              </div>
 
             </div>
           </motion.div>
