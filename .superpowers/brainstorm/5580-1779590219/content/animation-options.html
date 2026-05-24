@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animation Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f0f; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; padding: 32px 24px; }
+  h1 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .sub { font-size: 13px; color: #666; margin-bottom: 32px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .col { background: #1a1a1a; border-radius: 16px; padding: 20px; border: 1px solid #2a2a2a; }
+  .col-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #555; margin-bottom: 4px; }
+  .col-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .col-desc { font-size: 12px; color: #888; line-height: 1.5; margin-bottom: 6px; }
+  .col-source { font-size: 11px; color: #a7e5d3; margin-bottom: 16px; font-family: monospace; }
+
+  .stage {
+    background: #111;
+    border-radius: 12px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #222;
+  }
+
+  /* ── Phone shell ── */
+  .phone {
+    width: 90px;
+    background: #0a0a0a;
+    border-radius: 20px;
+    padding: 8px 6px 12px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+    cursor: pointer;
+  }
+  .notch { width: 30px; height: 4px; background: #1f1f1f; border-radius: 2px; margin: 0 auto 8px; }
+  .time { text-align: center; font-size: 18px; font-weight: 200; color: #fff; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .notif {
+    background: rgba(28,28,28,0.98);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 7px 8px;
+  }
+  .notif-head { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+  .notif-icon { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg,#a7e5d3,#c8b8e0); flex-shrink: 0; }
+  .notif-app { font-size: 7px; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+  .notif-time { font-size: 7px; color: #555; margin-left: auto; }
+  .notif-body { font-size: 7.5px; font-weight: 600; color: #fff; line-height: 1.4; margin-bottom: 4px; }
+  .notif-sub { font-size: 6.5px; color: #999; line-height: 1.4; }
+  .notif-cta { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 7px; color: #a7e5d3; font-weight: 700; }
+  .home { width: 48px; height: 3px; background: #1f1f1f; border-radius: 2px; margin: 10px auto 0; }
+  .replay { font-size: 10px; color: #555; margin-top: 8px; text-align: center; cursor: pointer; }
+  .replay:hover { color: #a7e5d3; }
+
+  /* ── A: iOS spring ── */
+  @keyframes ios-spring {
+    0%   { transform: translateX(120px); opacity: 0; }
+    55%  { transform: translateX(-8px);  opacity: 1; }
+    72%  { transform: translateX(4px); }
+    84%  { transform: translateX(-2px); }
+    92%  { transform: translateX(1px); }
+    100% { transform: translateX(0); }
+  }
+  .anim-ios { animation: ios-spring 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* ── B: 3D perspective tilt ── */
+  @keyframes tilt-in {
+    0%   { transform: perspective(600px) rotateY(25deg) translateX(60px) scale(0.92); opacity: 0; filter: blur(3px); }
+    100% { transform: perspective(600px) rotateY(0deg)  translateX(0)    scale(1);    opacity: 1; filter: blur(0); }
+  }
+  .anim-tilt { animation: tilt-in 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+
+  /* ── C: materialise (scale+blur+fade, no translate) ── */
+  @keyframes materialise {
+    0%   { transform: scale(0.88); opacity: 0; filter: blur(6px); }
+    60%  { filter: blur(0); }
+    100% { transform: scale(1);    opacity: 1; filter: blur(0); }
+  }
+  .anim-mat { animation: materialise 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  .paused { animation-play-state: paused !important; }
+</style>
+</head>
+<body>
+
+<h1>Phone entry animations</h1>
+<p class="sub">Click a phone to replay. Each preview uses CSS to approximate the Framer Motion feel.</p>
+
+<div class="grid">
+
+  <!-- A -->
+  <div class="col">
+    <div class="col-label">Option A</div>
+    <div class="col-title">iOS Notification Spring</div>
+    <div class="col-desc">Overshoots slightly then settles — the exact feel of a native iOS notification arriving. Spring with low damping, no bounce excess.</div>
+    <div class="col-source">framer.com/motion/transition/#spring<br>stiffness: 380, damping: 30, mass: 0.9</div>
+    <div class="stage" id="stage-a">
+      <div class="phone anim-ios" id="phone-a">
+        <div class="notch"></div>
+        <div class="time">10:42</div>
+        <div class="notif">
+          <div class="notif-head"><div class="notif-icon"></div><div class="notif-app">HALO</div><div class="notif-time">now</div></div>
+          <div class="notif-body">You've been at The Hudson Pub for 3 hours.</div>
+          <div class="notif-sub">Sleep debt: 2.1h · DS due 9 AM</div>
+          <div class="notif-cta">Head home → 3h still recoverable</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="replay" onclick="replay('a')">↺ replay</div>
+  </div>
+
+  <!-- B -->
+  <div class="col">
+    <div class="col-label">Option B</div>
+    <div class="col-title">3D Perspective Tilt</div>
+    <div class="col-desc">Phone turns toward you as it enters — like flipping a card face-up. Adds dimensionality and signals this is a different surface (a device, not a UI panel).</div>
+    <div class="col-source">framer.com/motion/animation<br>rotateY: 25→0, blur: 3→0, scale: 0.92→1</div>
+    <div class="stage" id="stage-b">
+      <div class="phone anim-tilt" id="phone-b">
+        <div class="notch"></div>
+        <div class="time">10:42</div>
+        <div class="notif">
+          <div class="notif-head"><div class="notif-icon"></div><div class="notif-app">HALO</div><div class="notif-time">now</div></div>
+          <div class="notif-body">You've been at The Hudson Pub for 3 hours.</div>
+          <div class="notif-sub">Sleep debt: 2.1h · DS due 9 AM</div>
+          <div class="notif-cta">Head home → 3h still recoverable</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="replay" onclick="replay('b')">↺ replay</div>
+  </div>
+
+  <!-- C -->
+  <div class="col">
+    <div class="col-label">Option C</div>
+    <div class="col-title">Materialise (scale + blur)</div>
+    <div class="col-desc">Phone fades in from slightly smaller with a blur, snapping to full size with a subtle overshoot. No directional bias — feels like it appears from nowhere, like a hologram.</div>
+    <div class="col-source">framer.com/motion/transition/#spring<br>scale: 0.88→1, blur: 6→0, ease: easeOut with overshoot</div>
+    <div class="stage" id="stage-c">
+      <div class="phone anim-mat" id="phone-c">
+        <div class="notch"></div>
+        <div class="time">10:42</div>
+        <div class="notif">
+          <div class="notif-head"><div class="notif-icon"></div><div class="notif-app">HALO</div><div class="notif-time">now</div></div>
+          <div class="notif-body">You've been at The Hudson Pub for 3 hours.</div>
+          <div class="notif-sub">Sleep debt: 2.1h · DS due 9 AM</div>
+          <div class="notif-cta">Head home → 3h still recoverable</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="replay" onclick="replay('c')">↺ replay</div>
+  </div>
+
+</div>
+
+<script>
+function replay(id) {
+  const el = document.getElementById('phone-' + id);
+  el.classList.remove('anim-ios','anim-tilt','anim-mat');
+  void el.offsetWidth; // force reflow
+  const map = { a: 'anim-ios', b: 'anim-tilt', c: 'anim-mat' };
+  el.classList.add(map[id]);
+}
+// Auto-replay every 4s
+['a','b','c'].forEach((id, i) => setTimeout(() => {
+  setInterval(() => replay(id), 4200);
+}, i * 400));
+</script>
+</body>
+</html>

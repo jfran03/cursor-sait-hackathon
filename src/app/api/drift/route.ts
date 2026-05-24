@@ -23,15 +23,37 @@ async function readMockSection(section: string) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  const { goals, commitments } = await req.json();
+function computeHours(commitments: { hours: number; is_goal_directed: boolean }[]) {
+  const unplanned = commitments.filter((c) => !c.is_goal_directed).reduce((s, c) => s + c.hours, 0);
+  const goal_directed = commitments.filter((c) => c.is_goal_directed).reduce((s, c) => s + c.hours, 0);
+  return { unplanned_hours: unplanned, goal_directed_hours: goal_directed };
+}
 
-  const userMessage = `Goals: ${JSON.stringify(goals)}\n\nCommitments this week: ${JSON.stringify(commitments)}`;
+export async function POST(req: NextRequest) {
+  const { goals, commitments, telemetry, pastWorkHistory, drift_context } = await req.json();
+  const computed = computeHours(commitments ?? []);
+
+  const userMessage = [
+    `Goals: ${JSON.stringify(goals)}`,
+    `Commitments this week: ${JSON.stringify(commitments)}`,
+    telemetry ? `Behavior telemetry: ${JSON.stringify(telemetry)}` : "",
+    pastWorkHistory ? `Work history: ${JSON.stringify(pastWorkHistory)}` : "",
+    drift_context ? `Drift context: ${JSON.stringify(drift_context)}` : "",
+    `Computed from commitments: ${JSON.stringify(computed)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   // If API key missing, return mock immediately
   if (!process.env.NVIDIA_API_KEY) {
     const mock = await readMockSection("drift");
-    if (mock) return NextResponse.json(mock);
+    if (mock) {
+      return NextResponse.json({
+        ...mock,
+        unplanned_hours: computed.unplanned_hours,
+        goal_directed_hours: computed.goal_directed_hours,
+      });
+    }
     return NextResponse.json({ error: "NVIDIA_API_KEY not set and mock unavailable" }, { status: 500 });
   }
 
@@ -81,11 +103,21 @@ export async function POST(req: NextRequest) {
     const parsed = DriftResponseSchema.safeParse(JSON.parse(toolCall.function.arguments));
     if (!parsed.success) throw new Error("Invalid response shape");
 
-    return NextResponse.json(parsed.data);
+    return NextResponse.json({
+      ...parsed.data,
+      unplanned_hours: computed.unplanned_hours,
+      goal_directed_hours: computed.goal_directed_hours,
+    });
   } catch (err) {
     // Fallback to mock on any error
     const mock = await readMockSection("drift");
-    if (mock) return NextResponse.json(mock);
+    if (mock) {
+      return NextResponse.json({
+        ...mock,
+        unplanned_hours: computed.unplanned_hours,
+        goal_directed_hours: computed.goal_directed_hours,
+      });
+    }
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }

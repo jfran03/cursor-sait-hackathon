@@ -1,465 +1,900 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import alexData from "@/data/demo/userProfile.json";
+import scheduleData from "@/data/demo/schedule.json";
 import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
+import pastWorkHistory from "@/data/demo/pastWorkHistory.json";
 import humanLogs from "@/data/demo/humanLogs.json";
 import PopupNudge from "@/components/PopupNudge";
-import type { DriftResponse, PriorityListResponse, DecomposeResponse } from "@/lib/types";
+import IntroScreen from "@/components/preamble/IntroScreen";
+import TaskDecomposePanel from "@/components/preamble/TaskDecomposePanel";
+import FocusTimer from "@/components/FocusTimer";
+import { mapSubtasksToSlots } from "@/lib/duration";
+import type { DriftResponse, PriorityListResponse, DecomposeResponse, Schedule } from "@/lib/types";
 
-type Step = "request" | "drift" | "priorities" | "decompose" | "summary";
+type Step = "intro" | "request" | "drift" | "priorities" | "decompose" | "summary";
+type JordanFollowUp = "none" | "typing" | "message";
 
-// ── Design tokens (from DESIGN.md) ──────────────────────────────────────────
+// ── Design tokens ─────────────────────────────────────────────────────────────
 const t = {
-  canvas:         "#f5f5f5",
-  canvasSoft:     "#fafafa",
-  surfaceCard:    "#ffffff",
-  surfaceStrong:  "#f0efed",
-  primary:        "#292524",
-  primaryActive:  "#0c0a09",
-  onPrimary:      "#ffffff",
-  ink:            "#0c0a09",
-  body:           "#4e4e4e",
-  bodyStrong:     "#292524",
-  muted:          "#777169",
-  mutedSoft:      "#a8a29e",
-  hairline:       "#e7e5e4",
-  hairlineStrong: "#d6d3d1",
-  // Gradient orbs
-  orbMint:        "#a7e5d3",
-  orbPeach:       "#f4c5a8",
-  orbLavender:    "#c8b8e0",
-  orbSky:         "#a8c8e8",
-  orbRose:        "#e8b8c4",
+  canvas:        "#f5f5f5",
+  surfaceStrong: "#f0efed",
+  primary:       "#292524",
+  onPrimary:     "#ffffff",
+  ink:           "#0c0a09",
+  body:          "#4e4e4e",
+  bodyStrong:    "#292524",
+  muted:         "#777169",
+  mutedSoft:     "#a8a29e",
+  hairline:      "#e7e5e4",
+  hairlineStrong:"#d6d3d1",
+  orbMint:       "#a7e5d3",
+  orbPeach:      "#f4c5a8",
+  orbLavender:   "#c8b8e0",
 } as const;
 
-// ── Shared styles ─────────────────────────────────────────────────────────────
-const displayLg: React.CSSProperties = {
-  fontFamily: "var(--font-eb-garamond), 'Times New Roman', serif",
-  fontSize: 36,
-  fontWeight: 400,   // EB Garamond 400 renders at Waldenburg 300 optical weight
-  lineHeight: 1.17,
-  letterSpacing: "-0.36px",
-  color: t.ink,
-  margin: 0,
+const dk = {
+  bg:         "rgba(12, 10, 9, 0.94)",
+  bgSoft:     "rgba(22, 20, 18, 0.90)",
+  border:     "rgba(255,255,255,0.08)",
+  borderSoft: "rgba(255,255,255,0.04)",
+  text:       "#f5f4f2",
+  textMuted:  "#8a8580",
+  textDim:    "#5a5550",
+  mint:       "#a7e5d3",
+  mintDim:    "rgba(167,229,211,0.12)",
+  red:        "#e8745a",
+  redDim:     "rgba(232,116,90,0.14)",
+} as const;
+
+// ── Framer variants ───────────────────────────────────────────────────────────
+// Inline animation props for step panels (avoids v12 Variants typing strictness)
+const panelIn  = { opacity: 1, y: 0,   filter: "blur(0px)"  };
+const panelOut = { opacity: 0, y: -10, filter: "blur(6px)"  };
+const panelHidden = { opacity: 0, y: 14, filter: "blur(8px)" };
+const panelTransition = { duration: 0.28, ease: "easeOut" as const };
+const panelExitTransition = { duration: 0.2, ease: "easeIn" as const };
+const layoutTween = { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const };
+
+const staggerList = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
 };
-const bodySm: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 400,
-  lineHeight: 1.47,
-  letterSpacing: "0.15px",
-  color: t.body,
+
+const staggerItem = {
+  hidden: { opacity: 0, x: -10 },
+  show:   { opacity: 1,  x: 0, transition: { type: "spring" as const, stiffness: 340, damping: 26 } },
 };
+
+const bubbleFromLeft = {
+  hidden: { opacity: 0, x: -14, scale: 0.92 },
+  show:   { opacity: 1,  x: 0,  scale: 1, transition: { type: "spring" as const, stiffness: 320, damping: 22 } },
+};
+
+const bubbleFromRight = {
+  hidden: { opacity: 0, x: 14, scale: 0.88 },
+  show:   { opacity: 1,  x: 0,  scale: 1, transition: { type: "spring" as const, stiffness: 300, damping: 20 } },
+};
+
+// ── Caption style ─────────────────────────────────────────────────────────────
 const captionUpper: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  lineHeight: 1.4,
-  letterSpacing: "0.96px",
-  textTransform: "uppercase",
-  color: t.muted,
+  fontSize: 11, fontWeight: 600, letterSpacing: "0.88px",
+  textTransform: "uppercase", color: dk.textMuted,
 };
-const card: React.CSSProperties = {
-  background: t.surfaceCard,
-  borderRadius: 16,
-  border: `1px solid ${t.hairline}`,
-  padding: "20px 24px",
-};
-const cardShadowHover = "0 4px 16px rgba(0,0,0,0.04)";
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [step, setStep]           = useState<Step>("request");
-  const [drift, setDrift]         = useState<DriftResponse | null>(null);
-  const [priorities, setPriorities] = useState<PriorityListResponse | null>(null);
-  const [decompose, setDecompose] = useState<DecomposeResponse | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [nudgeData, setNudgeData] = useState<{nudge:string,severity:string,do_not_disturb?:boolean}|null>(null);
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    try { return localStorage.getItem('halo_demo_mode') === 'true'; } catch { return false; }
+  const [step, setStep]               = useState<Step>("intro");
+  const [demoStarted, setDemoStarted] = useState(false);
+  const [drift, setDrift]             = useState<DriftResponse | null>(null);
+  const [priorities, setPriorities]   = useState<PriorityListResponse | null>(null);
+  const [decompose, setDecompose]     = useState<DecomposeResponse | null>(null);
+  const [loading, setLoading]         = useState(false);
+  const [nudgeData, setNudgeData]     = useState<{ nudge: string; severity: string; do_not_disturb?: boolean } | null>(null);
+  const [focusTimerOpen, setFocusTimerOpen] = useState(false);
+  const [focusTaskTitle, setFocusTaskTitle] = useState<string | undefined>();
+  const [demoMode, setDemoMode]       = useState<boolean>(() => {
+    try { return localStorage.getItem("halo_demo_mode") === "true"; } catch { return false; }
   });
+  const [messageArrived, setMessageArrived] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [alexReplied,    setAlexReplied]    = useState(false);
+  const [phoneVisible,   setPhoneVisible]   = useState(false);
+  const [jordanFollowUp, setJordanFollowUp] = useState<JordanFollowUp>("none");
+  const [reqBody,        setReqBody]        = useState(false);
+  const [reqCTA,         setReqCTA]         = useState(false);
+  const phoneSequenceRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const schedule = scheduleData as Schedule;
 
-  async function post<T>(url: string, body: object): Promise<T> {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return res.json();
+  function clearPhoneSequence() {
+    phoneSequenceRef.current.forEach(clearTimeout);
+    phoneSequenceRef.current = [];
   }
 
-  async function fetchDrift() {
-    setLoading(true);
-    const data = await post<DriftResponse>("/api/drift", {
-      goals: alexData.goals,
-      commitments: alexData.commitments,
-    });
-    setDrift(data);
-    setStep("drift");
-    setLoading(false);
-  }
-
-  async function fetchPriorities() {
-    setLoading(true);
-    const data = await post<PriorityListResponse>("/api/priorities", {
-      goals: alexData.goals,
-      commitments: alexData.commitments,
-    });
-    setPriorities(data);
-    setStep("priorities");
-    setLoading(false);
-  }
-
-  async function fetchDecompose() {
-    setLoading(true);
-    const data = await post<DecomposeResponse>("/api/decompose", {
-      task_title: alexData.stalled_item.goal_title,
-      goal: alexData.goals[1].title,
-    });
+  function schedulePhoneDismiss(data: DecomposeResponse) {
+    clearPhoneSequence();
     setDecompose(data);
-    setStep("decompose");
-    setLoading(false);
+    setAlexReplied(true);
+    setJordanFollowUp("typing");
+    phoneSequenceRef.current.push(
+      setTimeout(() => setJordanFollowUp("message"), 1400),
+      setTimeout(() => {
+        setPhoneVisible(false);
+        setStep("decompose");
+        setLoading(false);
+      }, 4400), // 1.4s Jordan reply + 3s linger
+    );
   }
 
-  function reset() {
+  useEffect(() => () => clearPhoneSequence(), []);
+
+  function beginDemo() {
+    setDemoStarted(true);
     setStep("request");
+    setPhoneVisible(true);
+  }
+
+  function openFocusTimer(index = 0) {
+    const title = decompose?.subtasks[index]?.title;
+    setFocusTaskTitle(title);
+    setFocusTimerOpen(true);
+  }
+
+  function resetDemo() {
+    clearPhoneSequence();
+    setStep("intro");
+    setDemoStarted(false);
     setDrift(null);
     setPriorities(null);
     setDecompose(null);
+    setAlexReplied(false);
+    setPhoneVisible(false);
+    setJordanFollowUp("none");
+    setMessageArrived(false);
+    setOverlayVisible(false);
+    setReqBody(false);
+    setReqCTA(false);
+    setFocusTimerOpen(false);
+    setFocusTaskTitle(undefined);
   }
 
-  // Check for proactive nudge on page load (demo: short-poll once)
+  // Jordan's message arrives after typing indicator (~1.4s).
+  // Phone hangs centered ~1.2s before Halo overlay slides in; content cascades after that.
   useEffect(() => {
-    async function checkNudge(){
+    if (!demoStarted) return;
+    const tMsg     = setTimeout(() => setMessageArrived(true),  1400);
+    const tOverlay = setTimeout(() => setOverlayVisible(true), 2600);
+    const tBody    = setTimeout(() => setReqBody(true),        3030);
+    const tCTA     = setTimeout(() => setReqCTA(true),         4380);
+    return () => { clearTimeout(tMsg); clearTimeout(tOverlay); clearTimeout(tBody); clearTimeout(tCTA); };
+  }, [demoStarted]);
+
+  // Alex replies to Jordan after the plan is generated
+  useEffect(() => {
+    if (step !== "priorities") return;
+    const t = setTimeout(() => setAlexReplied(true), 1200);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  // Nudge check on load
+  useEffect(() => {
+    async function checkNudge() {
       try {
-        const res = await fetch('/api/nudge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telemetry: telemetry, humanLogs: humanLogs, demo_mode: demoMode }),
+        const res = await fetch("/api/nudge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telemetry, humanLogs, demo_mode: demoMode }),
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (data && data.nudge && !data.do_not_disturb) setNudgeData(data);
-      } catch (e) {
-        console.error('nudge check failed', e);
-      }
+        if (data?.nudge && !data.do_not_disturb) setNudgeData(data);
+      } catch {}
     }
     checkNudge();
   }, []);
 
+  function toggleDemoMode() {
+    const next = !demoMode;
+    setDemoMode(next);
+    try { localStorage.setItem("halo_demo_mode", String(next)); } catch {}
+  }
+
+  async function post<T>(url: string, body: object): Promise<T> {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return res.json();
+  }
+
+  async function handleNext() {
+    if (step === "request") {
+      setLoading(true);
+      const data = await post<DriftResponse>("/api/drift", {
+        goals: alexData.goals,
+        commitments: alexData.commitments,
+        telemetry,
+        pastWorkHistory,
+        drift_context: alexData.drift_context,
+      });
+      setDrift(data);
+      setStep("drift");
+      setLoading(false);
+    } else if (step === "drift") {
+      setLoading(true);
+      const data = await post<PriorityListResponse>("/api/priorities", { goals: alexData.goals, commitments: alexData.commitments });
+      setPriorities(data);
+      setStep("priorities");
+      setLoading(false);
+    } else if (step === "priorities") {
+      setLoading(true);
+      const data = await post<DecomposeResponse>("/api/decompose", { task_title: alexData.stalled_item.goal_title, goal: alexData.goals[1].title });
+      schedulePhoneDismiss(data);
+    } else if (step === "decompose") {
+      setStep("summary");
+    } else {
+      resetDemo();
+    }
+  }
+
+  const stepLabel: Record<Step, string> = {
+    intro:      "Alex's week",
+    request:    "Before you reply",
+    drift:      "Here's where your week went",
+    priorities: "Tonight's plan",
+    decompose:  "DS homework, made small",
+    summary:    "You're back on track",
+  };
+  const nextLabel: Record<Step, string> = {
+    intro:      "Continue",
+    request:    "Analyze my week",
+    drift:      "Plan tonight",
+    priorities: "Break down DS homework",
+    decompose:  "Close session",
+    summary:    "Start over",
+  };
+
+  const unplannedHours = alexData.commitments.filter(c => !c.is_goal_directed).reduce((s, c) => s + c.hours, 0);
+
   return (
-    <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", background: t.canvas, color: t.body }}>
+    <>
+    <div style={{ minHeight: "100vh", background: t.canvas, overflow: "hidden", position: "relative" }}>
 
-      {/* Atmospheric orbs — decoration only, never content */}
-      <div className="orb" style={{ width: 480, height: 480, top: -100, right: -80,  background: `radial-gradient(circle, ${t.orbMint}, transparent)`,     opacity: 0.55, animationDelay: "0s"  }} />
-      <div className="orb" style={{ width: 360, height: 360, top: "42%", left: -120, background: `radial-gradient(circle, ${t.orbPeach}, transparent)`,    opacity: 0.50, animationDelay: "7s"  }} />
-      <div className="orb" style={{ width: 300, height: 300, bottom: 60, right: "20%", background: `radial-gradient(circle, ${t.orbLavender}, transparent)`, opacity: 0.42, animationDelay: "14s" }} />
+      {/* Atmospheric orbs */}
+      <div className="orb" style={{ width: 500, height: 500, top: -120, right: -80,  background: `radial-gradient(circle, ${t.orbMint}, transparent)`,    opacity: 0.45 }} />
+      <div className="orb" style={{ width: 380, height: 380, top: "50%", left: -140, background: `radial-gradient(circle, ${t.orbPeach}, transparent)`,   opacity: 0.40, animationDelay: "7s" }} />
+      <div className="orb" style={{ width: 300, height: 300, bottom: 40, right: "22%", background: `radial-gradient(circle, ${t.orbLavender}, transparent)`, opacity: 0.35, animationDelay: "14s" }} />
 
-      <div style={{ position: "relative", maxWidth: 560, margin: "0 auto", padding: "64px 24px 96px" }}>
-
-        {/* Wordmark */}
-        <header style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ ...captionUpper, color: t.mutedSoft }}>Halo</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13, color: t.muted }}>Demo mode</span>
-            <button onClick={() => { const v = !demoMode; setDemoMode(v); try { localStorage.setItem('halo_demo_mode', String(v)); } catch {} }} style={{ padding: '6px 10px', borderRadius: 999, border: '1px solid #e7e5e4', background: demoMode ? t.primary : 'transparent', color: demoMode ? t.onPrimary : t.body, cursor: 'pointer' }}>{demoMode ? 'ON' : 'OFF'}</button>
+      {/* Header */}
+      <header style={{
+        position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "18px 40px", borderBottom: `1px solid ${t.hairline}`,
+      }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.96px", textTransform: "uppercase", color: t.mutedSoft }}>Halo</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: t.bodyStrong }}>{alexData.user.name}</span>
+            <span style={{ fontSize: 13, color: t.muted }}>· SAIT · CIS</span>
           </div>
-        </header>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ fontSize: 12, color: t.muted }}>Demo</span>
+            <button
+              onClick={toggleDemoMode}
+              style={{
+                padding: "4px 10px", borderRadius: 9999, fontSize: 12, fontWeight: 600,
+                border: `1px solid ${t.hairlineStrong}`,
+                background: demoMode ? t.primary : "transparent",
+                color: demoMode ? t.onPrimary : t.muted,
+                cursor: "pointer",
+              }}
+            >
+              {demoMode ? "ON" : "OFF"}
+            </button>
+          </div>
+        </div>
+      </header>
 
-        <AnimatePresence mode="wait">
-
-        {/* ── Step 1: Incoming Request ── */}
-        {step === "request" && (
-          <motion.div key="request" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-          <Section>
-            <div>
-              <h1 style={displayLg}>
-                Before you say yes,<br />check in with yourself.
-              </h1>
-              <p style={{ ...bodySm, marginTop: 16 }}>
-                <span style={{ color: t.bodyStrong, fontWeight: 500 }}>{alexData.incoming_request.from}</span>{" "}
-                is asking: <em>"{alexData.incoming_request.description}"</em>
-              </p>
-            </div>
-
-            <div style={card}>
-              <p style={{ ...captionUpper, marginBottom: 16 }}>Your goals this week</p>
-              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                {alexData.goals.map((g) => (
-                  <li key={g.id} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <span style={{ marginTop: 7, width: 4, height: 4, borderRadius: "50%", background: t.muted, flexShrink: 0 }} />
-                    <span style={{ ...bodySm, color: t.bodyStrong }}>{g.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <PillBtn onClick={fetchDrift} loading={loading} label="See my drift" />
-          </Section>
-          </motion.div>
-        )}
-
-        {/* ── Step 2: Drift ── */}
-        {step === "drift" && drift && (
-          <motion.div key="drift" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-          <Section>
-            <h1 style={displayLg}>
-              Here's where your<br />week actually went.
-            </h1>
-
-            <div style={card}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                <StatBox label="Unplanned" value={`${drift.unplanned_hours}h`} />
-                <StatBox label="Goal-directed" value={`${drift.goal_directed_hours}h`} />
-              </div>
-
-              {drift.stalled_goals.length > 0 && (
-                <div style={{ marginBottom: 20 }}>
-                  <p style={{ ...captionUpper, marginBottom: 12 }}>Stalled</p>
-                  {drift.stalled_goals.map((sg, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "9px 0",
-                        borderBottom: i < drift.stalled_goals.length - 1 ? `1px solid ${t.hairlineStrong}` : "none",
-                      }}
-                    >
-                      <span style={{ ...bodySm, color: t.bodyStrong }}>{sg.goal_title}</span>
-                      <Badge label={`${sg.days_since_activity}d ago`} />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <p style={{ ...bodySm, lineHeight: 1.65 }}>{drift.message}</p>
-            </div>
-
-            <PillBtn onClick={fetchPriorities} loading={loading} label="Plan tonight" />
-          </Section>
-          </motion.div>
-        )}
-
-        {/* ── Step 3: Priorities ── */}
-        {step === "priorities" && priorities && (
-          <motion.div key="priorities" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-          <Section>
-            <div>
-              <h1 style={displayLg}>Tonight's plan.</h1>
-              <p style={{ ...bodySm, marginTop: 12 }}>
-                {priorities.protected_hours}h protected for your goals.
-              </p>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {priorities.items.map((item, i) => (
-                <HoverCard key={i}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 15, fontWeight: 500, letterSpacing: "0.15px", color: t.bodyStrong, margin: 0, lineHeight: 1.4 }}>
-                      {item.title}
-                    </p>
-                    <p style={{ ...bodySm, margin: "4px 0 0", fontSize: 13 }}>{item.rationale}</p>
-                  </div>
-                  <Badge label={`${item.estimated_minutes}m`} />
-                </HoverCard>
-              ))}
-            </div>
-
-            <PillBtn onClick={fetchDecompose} loading={loading} label="Break down DS homework" />
-          </Section>
-          </motion.div>
-        )}
-
-        {/* ── Step 4: Decompose ── */}
-        {step === "decompose" && decompose && (
-          <motion.div key="decompose" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-          <Section>
-            <div>
-              <h1 style={displayLg}>DS homework,<br />made small.</h1>
-              <p style={{ ...bodySm, marginTop: 12, lineHeight: 1.65 }}>{decompose.nudge}</p>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {decompose.subtasks.map((task, i) => (
-                <HoverCard key={i}>
-                  <span style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: t.surfaceStrong,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 600, letterSpacing: "0.5px",
-                    color: t.muted, flexShrink: 0,
-                  }}>
-                    {i + 1}
-                  </span>
-                  <span style={{ ...bodySm, flex: 1, color: t.bodyStrong }}>{task.title}</span>
-                  <Badge label={`${task.estimated_minutes}m`} />
-                </HoverCard>
-              ))}
-            </div>
-
-            <PillBtn onClick={() => setStep("summary")} loading={false} label="Close session" />
-          </Section>
-          </motion.div>
-        )}
-
-        {/* ── Step 5: Summary ── */}
-        {step === "summary" && priorities && (
-          <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 48, maxWidth: 680 }}>
-
-              {/* Left column — existing summary content */}
-              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 32 }}>
-                <div>
-                  <h1 style={displayLg}>
-                    {priorities.protected_hours} hours protected<br />for your goals tonight.
-                  </h1>
-                  <p style={{ ...bodySm, marginTop: 16, lineHeight: 1.65 }}>
-                    {priorities.closing_message}
-                  </p>
-                </div>
-
-                <div style={card}>
-                  <p style={{ ...captionUpper, marginBottom: 16 }}>Session recap</p>
-                  <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-                    {drift && (
-                      <li style={bodySm}>
-                        Drift identified — {drift.unplanned_hours}h unplanned vs {drift.goal_directed_hours}h goal-directed
-                      </li>
-                    )}
-                    <li style={bodySm}>{priorities.items.length} priorities set for tonight</li>
-                    {decompose && (
-                      <li style={bodySm}>
-                        DS homework broken into 4 steps — first one is {decompose.subtasks[0].estimated_minutes}m
-                      </li>
-                    )}
-                  </ul>
-                </div>
-
-                <PillBtn onClick={reset} loading={false} label="Start over" outline />
-              </div>
-
-              {/* Right column — phone (materialise) */}
-              <motion.div
-                style={{
-                  flexShrink: 0,
-                  width: 180,
-                  background: "#111",
-                  borderRadius: 32,
-                  padding: "14px 10px 18px",
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
-                }}
-                initial={{ scale: 0.88, opacity: 0, filter: "blur(6px)" }}
-                animate={{ scale: 1,    opacity: 1, filter: "blur(0px)" }}
-                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-              >
-                {/* Notch */}
-                <div style={{ width: 48, height: 5, background: "#222", borderRadius: 3, margin: "0 auto 12px" }} />
-
-                {/* Lock screen time */}
-                <div style={{ textAlign: "center", marginBottom: 10 }}>
-                  <div style={{ fontSize: 28, fontWeight: 200, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1 }}>10:42</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Friday, May 23</div>
-                </div>
-
-                {/* Notification card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: "easeOut", delay: 0.45 }}
-                >
-                  <div style={{
-                    background: "rgba(30,30,30,0.95)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 16,
-                    padding: "10px 12px",
-                  }}>
-                    {/* App header */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-                      <div style={{
-                        width: 16, height: 16, borderRadius: 5, flexShrink: 0,
-                        background: "linear-gradient(135deg, #a7e5d3, #c8b8e0)",
-                      }} />
-                      <div>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.3px" }}>HALO</div>
-                      </div>
-                      <div style={{ marginLeft: "auto", fontSize: 8, color: "#555" }}>now</div>
-                    </div>
-
-                    {/* Title */}
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", lineHeight: 1.4, marginBottom: 5 }}>
-                      You&apos;ve been at The Hudson Pub for 3 hours.
-                    </div>
-
-                    {/* Body */}
-                    <div style={{ fontSize: 9, color: "#aaa", lineHeight: 1.5 }}>
-                      Sleep debt: 2.1h · DS assignment due 9 AM · Research paper: 12 days untouched.
-                    </div>
-
-                    {/* CTA */}
-                    <div style={{
-                      marginTop: 8, paddingTop: 8,
-                      borderTop: "1px solid rgba(255,255,255,0.06)",
-                      fontSize: 9, fontWeight: 700, color: "#a7e5d3",
-                    }}>
-                      Head home now → 3h still recoverable tonight.
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Home indicator */}
-                <div style={{ width: 80, height: 4, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
-              </motion.div>
-
-            </div>
-          </motion.div>
-        )}
-
+      {/* Main split */}
+      <main style={{
+        position: "relative",
+        display: "flex", alignItems: step === "intro" ? "flex-start" : "center", justifyContent: "center",
+        gap: 40, padding: step === "intro" ? "32px 40px 64px" : "48px 40px 64px",
+        minHeight: "calc(100vh - 61px)",
+        flexWrap: "wrap",
+      }}>
+        {step === "intro" ? (
+          <IntroScreen
+            profile={alexData as React.ComponentProps<typeof IntroScreen>["profile"]}
+            schedule={schedule}
+            pastWorkHistory={pastWorkHistory}
+            telemetry={telemetry}
+            stalledItem={alexData.stalled_item}
+            onContinue={beginDemo}
+          />
+        ) : (
+        <LayoutGroup id="halo-stage">
+        <AnimatePresence mode="popLayout">
+          {phoneVisible && (
+            <PhoneMockup
+              key="phone"
+              step={step}
+              messageArrived={messageArrived}
+              alexReplied={alexReplied}
+              jordanFollowUp={jordanFollowUp}
+            />
+          )}
         </AnimatePresence>
 
-      {nudgeData && <PopupNudge nudge={nudgeData.nudge} severity={nudgeData.severity} onClose={() => setNudgeData(null)} />}
-      </div>
+        {/* ── Halo overlay — appears after phone hangs centered post-message ── */}
+        <AnimatePresence>
+        {overlayVisible && (
+        <LayoutGroup id="halo-overlay">
+        <motion.div
+          layout
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          animate={{ opacity: 1, y: 0,  filter: "blur(0px)"  }}
+          transition={{ duration: 0.18, ease: "easeOut", layout: layoutTween }}
+          style={{
+          width: 380, flexShrink: 0,
+          background: dk.bg,
+          backdropFilter: "blur(24px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+          border: `1px solid ${dk.border}`,
+          borderRadius: 20, overflow: "hidden",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03)",
+        }}>
+
+          {/* Overlay header */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "14px 20px", borderBottom: `1px solid ${dk.borderSoft}`,
+            background: "rgba(255,255,255,0.025)",
+          }}>
+            <div style={{
+              width: 18, height: 18, borderRadius: 6, flexShrink: 0,
+              background: `linear-gradient(135deg, ${dk.mint}, ${t.orbLavender})`,
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.88px", textTransform: "uppercase", color: dk.text }}>Halo</span>
+            <span style={{ fontSize: 11, color: dk.textDim, marginLeft: 2 }}>·</span>
+            {/* Step label crossfades */}
+            <div style={{ position: "relative", height: 18, flex: 1, overflow: "hidden" }}>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={step}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ fontSize: 12, color: dk.textMuted, position: "absolute", whiteSpace: "nowrap" }}
+                >
+                  {stepLabel[step]}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Overlay content */}
+          <motion.div layout transition={{ layout: layoutTween }} style={{ padding: "20px 20px 0" }}>
+            <AnimatePresence mode="wait">
+
+              {step === "request" && (
+                <motion.div key="request" layout exit={panelOut} transition={{ duration: 0.2, ease: "easeIn", layout: layoutTween }}>
+                  {/* Body tweens down as a unit; contents animate inside with delays */}
+                  {reqBody && (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: -14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.36, ease: "easeOut", layout: layoutTween }}
+                      style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                    >
+                      {/* Badge */}
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.34, duration: 0.22, ease: "easeOut" }}
+                      >
+                        <AlertBadge label="+3h requested" />
+                      </motion.div>
+
+                      {/* Headline + subline: word-by-word from bottom up */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <AnimatedWords
+                          lines={[`${unplannedHours} unplanned hours`, "this week."]}
+                          lineStyle={{ fontSize: 22, fontWeight: 400, fontFamily: "var(--font-eb-garamond), serif", color: dk.text, lineHeight: 1.25, letterSpacing: "-0.22px" }}
+                          delay={0.40}
+                        />
+                        <AnimatedWords
+                          lines={[`Research paper: ${alexData.goals[0].academic_metrics.days_since_active_engagement} days without a session.`]}
+                          lineStyle={{ fontSize: 13, color: dk.textMuted, lineHeight: 1.55 }}
+                          delay={0.72}
+                        />
+                      </div>
+
+                      {/* Goal rows: right to left */}
+                      <motion.div
+                        initial="hidden" animate="show"
+                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.18, delayChildren: 0.90 } } }}
+                        style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                      >
+                        {alexData.goals.map((g) => (
+                          <motion.div key={g.id}
+                            variants={{ hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 320, damping: 26 } } }}
+                            style={{
+                              display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8,
+                              padding: "9px 12px", borderRadius: 10,
+                              background: g.academic_metrics.days_since_active_engagement > 5 ? dk.redDim : dk.mintDim,
+                              border: `1px solid ${g.academic_metrics.days_since_active_engagement > 5 ? "rgba(232,116,90,0.18)" : "rgba(167,229,211,0.12)"}`,
+                            }}
+                          >
+                            <span style={{ fontSize: 13, color: dk.text, lineHeight: 1.35, flex: 1, minWidth: 0 }}>
+                              {g.title}
+                            </span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: g.academic_metrics.days_since_active_engagement > 5 ? dk.red : dk.mint, whiteSpace: "nowrap", flexShrink: 0 }}>
+                              {g.academic_metrics.days_since_active_engagement}d ago
+                            </span>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+
+                      {/* CTA slot reserved on body mount; button fades in later without resizing panel */}
+                      <motion.div
+                        layout
+                        transition={{ layout: layoutTween }}
+                        style={{ paddingTop: 8, paddingBottom: 20 }}
+                      >
+                        <motion.div
+                          initial={false}
+                          animate={{ opacity: reqCTA ? 1 : 0, y: reqCTA ? 0 : 6 }}
+                          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ pointerEvents: reqCTA ? "auto" : "none" }}
+                        >
+                          <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel["request"]} />
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+
+              {step === "drift" && drift && (
+                <motion.div key="drift" initial={panelHidden} animate={panelIn} exit={panelOut} transition={panelTransition}
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <DarkStat label="Unplanned" value={`${drift.unplanned_hours}h`} accent={dk.red} />
+                    <DarkStat label="Goal-directed" value={`${drift.goal_directed_hours}h`} accent={dk.mint} />
+                  </div>
+                  {drift.stalled_goals.length > 0 && (
+                    <motion.div variants={staggerList} initial="hidden" animate="show">
+                      <p style={{ ...captionUpper, marginBottom: 8 }}>Stalled</p>
+                      {drift.stalled_goals.map((sg, i) => (
+                        <motion.div key={i} variants={staggerItem} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8,
+                          padding: "7px 0",
+                          borderBottom: i < drift.stalled_goals.length - 1 ? `1px solid ${dk.borderSoft}` : "none",
+                        }}>
+                          <span style={{ fontSize: 13, color: dk.text, lineHeight: 1.35, flex: 1, minWidth: 0 }}>
+                            {sg.goal_title}
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: dk.red, whiteSpace: "nowrap", flexShrink: 0 }}>{sg.days_since_activity}d ago</span>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                  <p style={{ fontSize: 13, color: dk.textMuted, lineHeight: 1.6, margin: 0, borderTop: `1px solid ${dk.borderSoft}`, paddingTop: 12 }}>
+                    {drift.message}
+                  </p>
+                </motion.div>
+              )}
+
+              {step === "priorities" && priorities && (
+                <motion.div key="priorities" initial={panelHidden} animate={panelIn} exit={panelOut} transition={panelTransition}
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span style={{ fontSize: 22, fontWeight: 400, fontFamily: "var(--font-eb-garamond), serif", color: dk.mint, letterSpacing: "-0.22px" }}>
+                      {priorities.protected_hours}h
+                    </span>
+                    <span style={{ fontSize: 13, color: dk.textMuted }}>protected for your goals tonight.</span>
+                  </div>
+                  <motion.div variants={staggerList} initial="hidden" animate="show" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {priorities.items.map((item, i) => (
+                      <motion.div key={i} variants={staggerItem} style={{
+                        display: "flex", gap: 10, alignItems: "flex-start",
+                        padding: "10px 12px", borderRadius: 10,
+                        background: dk.bgSoft, border: `1px solid ${dk.borderSoft}`,
+                      }}>
+                        <span style={{
+                          width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                          background: "rgba(255,255,255,0.06)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 10, fontWeight: 700, color: dk.textDim,
+                        }}>{i + 1}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 500, color: dk.text, margin: 0, lineHeight: 1.3 }}>{item.title}</p>
+                          <p style={{ fontSize: 12, color: dk.textMuted, margin: "3px 0 0", lineHeight: 1.4 }}>{item.rationale}</p>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: dk.textDim, whiteSpace: "nowrap" }}>{item.estimated_minutes}m</span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {step === "decompose" && decompose && (
+                <motion.div key="decompose" initial={panelHidden} animate={panelIn} exit={panelOut} transition={panelTransition}
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <p style={{ fontSize: 13, color: dk.textMuted, lineHeight: 1.6, margin: 0 }}>{decompose.nudge}</p>
+                  <TaskDecomposePanel
+                    subtasks={decompose.subtasks}
+                    slots={mapSubtasksToSlots(decompose.subtasks)}
+                    onStartFocus={() => openFocusTimer(0)}
+                  />
+                  <p style={{ fontSize: 12, color: dk.textMuted, borderTop: `1px solid ${dk.borderSoft}`, paddingTop: 12, margin: 0 }}>
+                    First step: 20 minutes. Set a timer now.
+                  </p>
+                </motion.div>
+              )}
+
+              {step === "summary" && priorities && (
+                <motion.div key="summary" initial={panelHidden} animate={panelIn} exit={panelOut} transition={panelTransition}
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <p style={{ fontSize: 22, fontWeight: 400, fontFamily: "var(--font-eb-garamond), serif", color: dk.text, lineHeight: 1.25, letterSpacing: "-0.22px", margin: 0 }}>
+                    You&apos;re back on track.
+                  </p>
+                  <motion.div variants={staggerList} initial="hidden" animate="show" style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                    {drift && (
+                      <motion.div variants={staggerItem}>
+                        <SummaryRow label="Drift surfaced" value={`${drift.unplanned_hours}h unplanned → ${drift.goal_directed_hours}h goal-directed`} />
+                      </motion.div>
+                    )}
+                    <motion.div variants={staggerItem}>
+                      <SummaryRow label="Priorities set" value={`${priorities.items.length} items · ${priorities.protected_hours}h protected`} />
+                    </motion.div>
+                    {decompose && (
+                      <motion.div variants={staggerItem}>
+                        <SummaryRow label="DS homework" value={`4 steps · first one is ${decompose.subtasks[0].estimated_minutes}m`} />
+                      </motion.div>
+                    )}
+                  </motion.div>
+                  <p style={{ fontSize: 13, color: dk.textMuted, lineHeight: 1.6, margin: 0 }}>
+                    {priorities.closing_message}
+                  </p>
+                </motion.div>
+              )}
+
+            </AnimatePresence>
+          </motion.div>
+
+          {/* CTA — request step handles its own CTA inside the body; only non-request steps use this */}
+          <AnimatePresence>
+            {step !== "request" && (
+              <motion.div
+                key={step}
+                layout
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ duration: 0.22, ease: "easeOut", layout: layoutTween }}
+                style={{ padding: "16px 20px 20px" }}
+              >
+                <OverlayBtn onClick={handleNext} loading={loading} label={nextLabel[step]} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+        </motion.div>
+        </LayoutGroup>
+        )}
+        </AnimatePresence>
+        </LayoutGroup>
+        )}
+      </main>
     </div>
+
+    {nudgeData && (
+      <PopupNudge
+        nudge={nudgeData.nudge}
+        severity={nudgeData.severity}
+        onClose={() => setNudgeData(null)}
+        onStartFocus={() => openFocusTimer(0)}
+      />
+    )}
+
+    <FocusTimer
+      open={focusTimerOpen}
+      taskTitle={focusTaskTitle}
+      onClose={() => setFocusTimerOpen(false)}
+      onComplete={() => setFocusTimerOpen(false)}
+    />
+    </>
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Phone mockup ───────────────────────────────────────────────────────────────
+const PHONE_SCREEN_HEIGHT = 420;
 
-function Section({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-      {children}
-    </div>
-  );
-}
+function PhoneMockup({
+  step,
+  messageArrived,
+  alexReplied,
+  jordanFollowUp,
+}: {
+  step: Step;
+  messageArrived: boolean;
+  alexReplied: boolean;
+  jordanFollowUp: JordanFollowUp;
+}) {
+  const showAlexTyping = step === "priorities" && !alexReplied && jordanFollowUp === "none";
+  const showReply      = alexReplied;
+  const threadRef = useRef<HTMLDivElement>(null);
 
-function HoverCard({ children }: { children: React.ReactNode }) {
-  const [hovered, setHovered] = useState(false);
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messageArrived, showAlexTyping, showReply, jordanFollowUp]);
+
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94, filter: "blur(6px)" }}
+      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.92, filter: "blur(10px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background: "#ffffff",
-        borderRadius: 16,
-        border: `1px solid ${t.hairline}`,
-        padding: "14px 20px",
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        transition: "box-shadow 0.15s",
-        boxShadow: hovered ? cardShadowHover : "none",
+        width: 264, flexShrink: 0,
+        background: "#111", borderRadius: 40,
+        padding: "16px 10px 20px",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.04)",
       }}
     >
-      {children}
+      {/* Notch */}
+      <div style={{ width: 72, height: 6, background: "#000", borderRadius: 4, margin: "0 auto 10px", border: "1px solid #222" }} />
+
+      {/* Status bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 14px 10px" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>10:41</span>
+        <div style={{ width: 14, height: 8, borderRadius: 2, border: "1px solid rgba(255,255,255,0.4)", position: "relative" }}>
+          <div style={{ position: "absolute", inset: "1px", right: 3, background: "#fff", borderRadius: 1 }} />
+        </div>
+      </div>
+
+      {/* Messages screen — fixed height; thread scrolls inside */}
+      <div style={{
+        background: "#fff", borderRadius: 28, overflow: "hidden",
+        display: "flex", flexDirection: "column", height: PHONE_SCREEN_HEIGHT,
+      }}>
+
+        {/* iMessage chrome */}
+        <div style={{ flexShrink: 0, background: "rgba(245,245,247,0.96)", backdropFilter: "blur(12px)", padding: "10px 14px", borderBottom: "1px solid rgba(0,0,0,0.08)", textAlign: "center" }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #5e72e4, #825ee4)", margin: "0 auto 4px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#fff" }}>J</div>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#111" }}>Jordan (AI Club)</p>
+          <p style={{ margin: 0, fontSize: 10, color: "#8e8e93" }}>iMessage</p>
+        </div>
+
+        {/* Bubbles — scrollable thread */}
+        <div
+          ref={threadRef}
+          style={{
+            flex: 1, minHeight: 0, overflowY: "auto",
+            padding: "12px 10px", display: "flex", flexDirection: "column", gap: 8,
+            background: "#fff",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+
+          <AnimatePresence>
+            {messageArrived && (
+              <motion.p
+                key="ts"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{ textAlign: "center", fontSize: 10, color: "#8e8e93", margin: "4px 0" }}
+              >
+                Today 10:38 AM
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {/* Jordan: typing indicator → message */}
+          <AnimatePresence mode="wait">
+            {!messageArrived ? (
+              /* Jordan typing */
+              <motion.div
+                key="jordan-typing"
+                initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+                exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.15 } }}
+                style={{ alignSelf: "flex-start" }}
+              >
+                <div style={{ background: "#e5e5ea", borderRadius: "18px 18px 18px 4px", padding: "9px 14px", display: "flex", gap: 4, alignItems: "center" }}>
+                  {[0, 1, 2].map(i => (
+                    <motion.div
+                      key={i}
+                      style={{ width: 6, height: 6, borderRadius: "50%", background: "#8e8e93" }}
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+                      transition={{ duration: 1.0, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              /* Jordan's message springs in */
+              <motion.div
+                key="jordan-message"
+                variants={bubbleFromLeft}
+                initial="hidden"
+                animate="show"
+                style={{ alignSelf: "flex-start", maxWidth: "82%" }}
+              >
+                <div style={{ background: "#e5e5ea", borderRadius: "18px 18px 18px 4px", padding: "9px 12px" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#111", lineHeight: 1.4 }}>
+                    Hey Alex! Can you help set up the AI club booth at the campus fair tomorrow? Should take about 3 hours 🙌
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Alex: typing / reply */}
+          <AnimatePresence mode="wait">
+            {showAlexTyping && (
+              <motion.div
+                key="typing"
+                initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+                exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.15 } }}
+                style={{ alignSelf: "flex-end" }}
+              >
+                <div style={{ background: "#e5e5ea", borderRadius: "18px 18px 4px 18px", padding: "9px 14px", display: "flex", gap: 4, alignItems: "center" }}>
+                  {[0, 1, 2].map(i => (
+                    <motion.div
+                      key={i}
+                      style={{ width: 6, height: 6, borderRadius: "50%", background: "#8e8e93" }}
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+                      transition={{ duration: 1.0, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {showReply && (
+              <motion.div
+                key="reply"
+                variants={bubbleFromRight}
+                initial="hidden"
+                animate="show"
+                style={{ alignSelf: "flex-end", maxWidth: "82%" }}
+              >
+                <div style={{ background: "#007aff", borderRadius: "18px 18px 4px 18px", padding: "9px 12px" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#fff", lineHeight: 1.4 }}>
+                    Hey! I&apos;d love to but I&apos;ve got a deadline tonight — research paper and DS homework need attention. Maybe next time? 🙏
+                  </p>
+                </div>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  style={{ margin: "4px 0 0", fontSize: 10, color: "#8e8e93", textAlign: "right" }}
+                >
+                  Delivered
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Jordan follow-up after Alex declines */}
+          <AnimatePresence mode="wait">
+            {jordanFollowUp === "typing" && (
+              <motion.div
+                key="jordan-followup-typing"
+                initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+                exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.15 } }}
+                style={{ alignSelf: "flex-start" }}
+              >
+                <div style={{ background: "#e5e5ea", borderRadius: "18px 18px 18px 4px", padding: "9px 14px", display: "flex", gap: 4, alignItems: "center" }}>
+                  {[0, 1, 2].map(i => (
+                    <motion.div
+                      key={i}
+                      style={{ width: 6, height: 6, borderRadius: "50%", background: "#8e8e93" }}
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+                      transition={{ duration: 1.0, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {jordanFollowUp === "message" && (
+              <motion.div
+                key="jordan-followup-message"
+                variants={bubbleFromLeft}
+                initial="hidden"
+                animate="show"
+                style={{ alignSelf: "flex-start", maxWidth: "82%" }}
+              >
+                <div style={{ background: "#e5e5ea", borderRadius: "18px 18px 18px 4px", padding: "9px 12px" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#111", lineHeight: 1.4 }}>
+                    No worries, totally get it! Good luck with the paper tonight 💪
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+        </div>
+
+        {/* Input bar */}
+        <div style={{
+          flexShrink: 0,
+          padding: "8px 10px", borderTop: "1px solid rgba(0,0,0,0.08)",
+          background: "rgba(245,245,247,0.96)",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <div style={{ flex: 1, background: "#fff", border: "1px solid #e0e0e0", borderRadius: 18, padding: "7px 12px", fontSize: 13, color: "#8e8e93" }}>
+            {showReply ? "" : "iMessage"}
+          </div>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: showReply ? "#007aff" : "#e0e0e0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M1.5 6.5L6.5 1.5L11.5 6.5M6.5 2V11.5" stroke={showReply ? "#fff" : "#8e8e93"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Home indicator */}
+      <div style={{ width: 90, height: 4, background: "#333", borderRadius: 2, margin: "12px auto 0" }} />
+    </motion.div>
+  );
+}
+
+// ── Shared overlay sub-components ─────────────────────────────────────────────
+
+function AnimatedWords({ lines, lineStyle, delay = 0 }: {
+  lines: string[];
+  lineStyle?: React.CSSProperties;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.055, delayChildren: delay } } }}
+    >
+      {lines.map((line, li) => (
+        <div key={li} style={{ display: "block", ...lineStyle }}>
+          {line.split(" ").map((word, wi) => (
+            <motion.span
+              key={`${li}-${wi}`}
+              style={{ display: "inline-block", marginRight: "0.28em" }}
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                show:   { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 340, damping: 28 } },
+              }}
+            >
+              {word}
+            </motion.span>
+          ))}
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+function AlertBadge({ label }: { label: string }) {
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "4px 10px", borderRadius: 9999, alignSelf: "flex-start",
+      background: dk.redDim, border: "1px solid rgba(232,116,90,0.2)",
+    }}>
+      <div style={{ width: 5, height: 5, borderRadius: "50%", background: dk.red }} />
+      <span style={{ fontSize: 11, fontWeight: 600, color: dk.red, letterSpacing: "0.3px" }}>{label}</span>
     </div>
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
+function DarkStat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div style={{ background: t.surfaceStrong, borderRadius: 12, padding: "14px 16px" }}>
-      <p style={{ fontFamily: "var(--font-eb-garamond), serif", fontSize: 28, fontWeight: 400, letterSpacing: "-0.32px", color: t.ink, margin: 0, lineHeight: 1.1 }}>
+    <div style={{ background: dk.bgSoft, borderRadius: 10, padding: "12px 14px", border: `1px solid ${dk.borderSoft}` }}>
+      <p style={{ fontFamily: "var(--font-eb-garamond), serif", fontSize: 26, fontWeight: 400, letterSpacing: "-0.3px", color: accent, margin: 0, lineHeight: 1 }}>
         {value}
       </p>
       <p style={{ ...captionUpper, marginTop: 4 }}>{label}</p>
@@ -467,58 +902,43 @@ function StatBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Badge({ label }: { label: string }) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <span style={{
-      flexShrink: 0,
-      background: t.surfaceStrong,
-      borderRadius: 9999,
-      padding: "3px 10px",
-      fontSize: 11,
-      fontWeight: 600,
-      letterSpacing: "0.5px",
-      color: t.muted,
-      whiteSpace: "nowrap",
-    }}>
-      {label}
-    </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 1, padding: "9px 12px", borderRadius: 9, background: dk.bgSoft, border: `1px solid ${dk.borderSoft}` }}>
+      <span style={{ ...captionUpper, fontSize: 10 }}>{label}</span>
+      <span style={{ fontSize: 13, color: dk.text }}>{value}</span>
+    </div>
   );
 }
 
-function PillBtn({
-  onClick, loading, label, outline = false,
-}: {
-  onClick: () => void;
-  loading: boolean;
-  label: string;
-  outline?: boolean;
-}) {
-  const [active, setActive] = useState(false);
+function OverlayBtn({ onClick, loading, label }: { onClick: () => void; loading: boolean; label: string }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={loading}
-      onMouseDown={() => setActive(true)}
-      onMouseUp={() => setActive(false)}
-      onMouseLeave={() => setActive(false)}
+      whileHover={{ background: "rgba(255,255,255,0.13)" }}
+      whileTap={{ scale: 0.97 }}
       style={{
-        alignSelf: "flex-start",
-        height: 40,
-        borderRadius: 9999,
-        padding: "0 20px",
-        fontSize: 15,
-        fontWeight: 500,
-        lineHeight: 1,
-        letterSpacing: 0,
+        width: "100%", height: 38, borderRadius: 9999, border: "none",
+        background: "rgba(255,255,255,0.08)",
+        color: loading ? dk.textDim : dk.text,
+        fontSize: 13, fontWeight: 500, letterSpacing: "0.1px",
         cursor: loading ? "not-allowed" : "pointer",
-        opacity: loading ? 0.4 : 1,
-        transition: "opacity 0.15s",
-        background: outline ? "transparent" : (active ? t.primaryActive : t.primary),
-        color: outline ? t.ink : t.onPrimary,
-        border: outline ? `1px solid ${t.hairlineStrong}` : "none",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
       }}
     >
-      {loading ? "Working…" : `${label} →`}
-    </button>
+      {loading ? (
+        <>
+          <motion.div
+            style={{ width: 12, height: 12, border: `1.5px solid ${dk.textDim}`, borderTopColor: dk.mint, borderRadius: "50%" }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+          />
+          Analyzing…
+        </>
+      ) : (
+        `${label} →`
+      )}
+    </motion.button>
   );
 }
