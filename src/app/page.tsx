@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import alexData from "@/data/demo/userProfile.json";
+import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
+import humanLogs from "@/data/demo/humanLogs.json";
+import PopupNudge from "@/components/PopupNudge";
 import type { DriftResponse, PriorityListResponse, DecomposeResponse } from "@/lib/types";
 
 type Step = "request" | "drift" | "priorities" | "decompose" | "summary";
@@ -69,6 +72,10 @@ export default function Home() {
   const [priorities, setPriorities] = useState<PriorityListResponse | null>(null);
   const [decompose, setDecompose] = useState<DecomposeResponse | null>(null);
   const [loading, setLoading]     = useState(false);
+  const [nudgeData, setNudgeData] = useState<{nudge:string,severity:string,do_not_disturb?:boolean}|null>(null);
+  const [demoMode, setDemoMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('halo_demo_mode') === 'true'; } catch { return false; }
+  });
 
   async function post<T>(url: string, body: object): Promise<T> {
     const res = await fetch(url, {
@@ -119,6 +126,25 @@ export default function Home() {
     setDecompose(null);
   }
 
+  // Check for proactive nudge on page load (demo: short-poll once)
+  React.useEffect(() => {
+    async function checkNudge(){
+      try {
+        const res = await fetch('/api/nudge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telemetry: telemetry, humanLogs: humanLogs, demo_mode: demoMode }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.nudge && !data.do_not_disturb) setNudgeData(data);
+      } catch (e) {
+        console.error('nudge check failed', e);
+      }
+    }
+    checkNudge();
+  }, []);
+
   return (
     <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", background: t.canvas, color: t.body }}>
 
@@ -130,8 +156,12 @@ export default function Home() {
       <div style={{ position: "relative", maxWidth: 560, margin: "0 auto", padding: "64px 24px 96px" }}>
 
         {/* Wordmark */}
-        <header style={{ marginBottom: 80 }}>
+        <header style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ ...captionUpper, color: t.mutedSoft }}>Halo</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, color: t.muted }}>Demo mode</span>
+            <button onClick={() => { const v = !demoMode; setDemoMode(v); try { localStorage.setItem('halo_demo_mode', String(v)); } catch {} }} style={{ padding: '6px 10px', borderRadius: 999, border: '1px solid #e7e5e4', background: demoMode ? t.primary : 'transparent', color: demoMode ? t.onPrimary : t.body, cursor: 'pointer' }}>{demoMode ? 'ON' : 'OFF'}</button>
+          </div>
         </header>
 
         {/* ── Step 1: Incoming Request ── */}
@@ -295,6 +325,7 @@ export default function Home() {
           </Section>
         )}
 
+      {nudgeData && <PopupNudge nudge={nudgeData.nudge} severity={nudgeData.severity} onClose={() => setNudgeData(null)} />}
       </div>
     </div>
   );
