@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import alexData from "@/data/demo/userProfile.json";
 import telemetry from "@/data/demo/currentBehaviorTelemetry.json";
 import humanLogs from "@/data/demo/humanLogs.json";
@@ -164,8 +165,11 @@ export default function Home() {
           </div>
         </header>
 
+        <AnimatePresence mode="wait">
+
         {/* ── Step 1: Incoming Request ── */}
         {step === "request" && (
+          <motion.div key="request" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
           <Section>
             <div>
               <h1 style={displayLg}>
@@ -191,10 +195,12 @@ export default function Home() {
 
             <PillBtn onClick={fetchDrift} loading={loading} label="See my drift" />
           </Section>
+          </motion.div>
         )}
 
         {/* ── Step 2: Drift ── */}
         {step === "drift" && drift && (
+          <motion.div key="drift" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
           <Section>
             <h1 style={displayLg}>
               Here's where your<br />week actually went.
@@ -232,10 +238,12 @@ export default function Home() {
 
             <PillBtn onClick={fetchPriorities} loading={loading} label="Plan tonight" />
           </Section>
+          </motion.div>
         )}
 
         {/* ── Step 3: Priorities ── */}
         {step === "priorities" && priorities && (
+          <motion.div key="priorities" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
           <Section>
             <div>
               <h1 style={displayLg}>Tonight's plan.</h1>
@@ -260,10 +268,12 @@ export default function Home() {
 
             <PillBtn onClick={fetchDecompose} loading={loading} label="Break down DS homework" />
           </Section>
+          </motion.div>
         )}
 
         {/* ── Step 4: Decompose ── */}
         {step === "decompose" && decompose && (
+          <motion.div key="decompose" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
           <Section>
             <div>
               <h1 style={displayLg}>DS homework,<br />made small.</h1>
@@ -290,40 +300,53 @@ export default function Home() {
 
             <PillBtn onClick={() => setStep("summary")} loading={false} label="Close session" />
           </Section>
+          </motion.div>
         )}
 
         {/* ── Step 5: Summary ── */}
         {step === "summary" && priorities && (
-          <Section>
-            <div>
-              <h1 style={displayLg}>
-                {priorities.protected_hours} hours protected<br />for your goals tonight.
-              </h1>
-              <p style={{ ...bodySm, marginTop: 16, lineHeight: 1.65 }}>
-                {priorities.closing_message}
-              </p>
-            </div>
+          <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 48, maxWidth: 680 }}>
 
-            <div style={card}>
-              <p style={{ ...captionUpper, marginBottom: 16 }}>Session recap</p>
-              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-                {drift && (
-                  <li style={bodySm}>
-                    Drift identified — {drift.unplanned_hours}h unplanned vs {drift.goal_directed_hours}h goal-directed
-                  </li>
-                )}
-                <li style={bodySm}>{priorities.items.length} priorities set for tonight</li>
-                {decompose && (
-                  <li style={bodySm}>
-                    DS homework broken into 4 steps — first one is {decompose.subtasks[0].estimated_minutes}m
-                  </li>
-                )}
-              </ul>
-            </div>
+              {/* Left column — existing summary content */}
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 32 }}>
+                <div>
+                  <h1 style={displayLg}>
+                    {priorities.protected_hours} hours protected<br />for your goals tonight.
+                  </h1>
+                  <p style={{ ...bodySm, marginTop: 16, lineHeight: 1.65 }}>
+                    {priorities.closing_message}
+                  </p>
+                </div>
 
-            <PillBtn onClick={reset} loading={false} label="Start over" outline />
-          </Section>
+                <div style={card}>
+                  <p style={{ ...captionUpper, marginBottom: 16 }}>Session recap</p>
+                  <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                    {drift && (
+                      <li style={bodySm}>
+                        Drift identified — {drift.unplanned_hours}h unplanned vs {drift.goal_directed_hours}h goal-directed
+                      </li>
+                    )}
+                    <li style={bodySm}>{priorities.items.length} priorities set for tonight</li>
+                    {decompose && (
+                      <li style={bodySm}>
+                        DS homework broken into 4 steps — first one is {decompose.subtasks[0].estimated_minutes}m
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <PillBtn onClick={reset} loading={false} label="Start over" outline />
+              </div>
+
+              {/* Right column — phone placeholder */}
+              <div style={{ flexShrink: 0, width: 180, height: 200, background: "#111", borderRadius: 32 }} />
+
+            </div>
+          </motion.div>
         )}
+
+        </AnimatePresence>
 
       {nudgeData && <PopupNudge nudge={nudgeData.nudge} severity={nudgeData.severity} onClose={() => setNudgeData(null)} />}
       </div>
