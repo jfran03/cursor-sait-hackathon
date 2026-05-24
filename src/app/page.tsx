@@ -357,8 +357,44 @@ export default function Home() {
                   <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Friday, May 23</div>
                 </div>
 
-                {/* Notification card placeholder */}
-                <div style={{ background: "rgba(30,30,30,0.95)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", padding: "10px 12px", minHeight: 80 }} />
+                {/* Notification card */}
+                <div style={{
+                  background: "rgba(30,30,30,0.95)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 16,
+                  padding: "10px 12px",
+                }}>
+                  {/* App header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 5, flexShrink: 0,
+                      background: "linear-gradient(135deg, #a7e5d3, #c8b8e0)",
+                    }} />
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.3px" }}>HALO</div>
+                    </div>
+                    <div style={{ marginLeft: "auto", fontSize: 8, color: "#555" }}>now</div>
+                  </div>
+
+                  {/* Title */}
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", lineHeight: 1.4, marginBottom: 5 }}>
+                    You&apos;ve been at The Hudson Pub for 3 hours.
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ fontSize: 9, color: "#aaa", lineHeight: 1.5 }}>
+                    Sleep debt: 2.1h · DS assignment due 9 AM · Research paper: 12 days untouched.
+                  </div>
+
+                  {/* CTA */}
+                  <div style={{
+                    marginTop: 8, paddingTop: 8,
+                    borderTop: "1px solid rgba(255,255,255,0.06)",
+                    fontSize: 9, fontWeight: 700, color: "#a7e5d3",
+                  }}>
+                    Head home now → 3h still recoverable tonight.
+                  </div>
+                </div>
 
                 {/* Home indicator */}
                 <div style={{ width: 80, height: 4, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
