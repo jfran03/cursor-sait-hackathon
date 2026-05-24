@@ -9,13 +9,15 @@ import pastWorkHistory from "@/data/demo/pastWorkHistory.json";
 import humanLogs from "@/data/demo/humanLogs.json";
 import PopupNudge from "@/components/PopupNudge";
 import IntroScreen from "@/components/preamble/IntroScreen";
+import CalendarDeliberation from "@/components/preamble/CalendarDeliberation";
 import TaskDecomposePanel from "@/components/preamble/TaskDecomposePanel";
 import FocusTimer from "@/components/FocusTimer";
 import { mapSubtasksToSlots } from "@/lib/duration";
-import type { DriftResponse, PriorityListResponse, DecomposeResponse, Schedule } from "@/lib/types";
+import type { DriftResponse, PriorityListResponse, DecomposeResponse, Schedule, Goal } from "@/lib/types";
 
 type Step = "intro" | "request" | "drift" | "priorities" | "decompose" | "summary";
 type JordanFollowUp = "none" | "typing" | "message";
+type CalendarPhase = "week" | "day" | "deliberate";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const t = {
@@ -106,6 +108,8 @@ export default function Home() {
   const [jordanFollowUp, setJordanFollowUp] = useState<JordanFollowUp>("none");
   const [reqBody,        setReqBody]        = useState(false);
   const [reqCTA,         setReqCTA]         = useState(false);
+  const [calendarPhase,  setCalendarPhase]  = useState<CalendarPhase>("week");
+  const [nudgeShown,     setNudgeShown]     = useState(false);
   const phoneSequenceRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const schedule = scheduleData as Schedule;
 
@@ -158,19 +162,31 @@ export default function Home() {
     setOverlayVisible(false);
     setReqBody(false);
     setReqCTA(false);
+    setCalendarPhase("week");
+    setNudgeShown(false);
+    setNudgeData(null);
     setFocusTimerOpen(false);
     setFocusTaskTitle(undefined);
   }
 
-  // Jordan's message arrives after typing indicator (~1.4s).
-  // Phone hangs centered ~1.2s before Halo overlay slides in; content cascades after that.
+  // Jordan sequence: week calendar → zoom to today → deliberate → message → Halo overlay.
   useEffect(() => {
     if (!demoStarted) return;
-    const tMsg     = setTimeout(() => setMessageArrived(true),  1400);
-    const tOverlay = setTimeout(() => setOverlayVisible(true), 2600);
-    const tBody    = setTimeout(() => setReqBody(true),        3030);
-    const tCTA     = setTimeout(() => setReqCTA(true),         4380);
-    return () => { clearTimeout(tMsg); clearTimeout(tOverlay); clearTimeout(tBody); clearTimeout(tCTA); };
+    setCalendarPhase("week");
+    const tDay       = setTimeout(() => setCalendarPhase("day"), 900);
+    const tMsg       = setTimeout(() => setMessageArrived(true), 1400);
+    const tDeliberate = setTimeout(() => setCalendarPhase("deliberate"), 1800);
+    const tOverlay   = setTimeout(() => setOverlayVisible(true), 2600);
+    const tBody      = setTimeout(() => setReqBody(true), 3030);
+    const tCTA       = setTimeout(() => setReqCTA(true), 4380);
+    return () => {
+      clearTimeout(tDay);
+      clearTimeout(tMsg);
+      clearTimeout(tDeliberate);
+      clearTimeout(tOverlay);
+      clearTimeout(tBody);
+      clearTimeout(tCTA);
+    };
   }, [demoStarted]);
 
   // Alex replies to Jordan after the plan is generated
@@ -180,9 +196,10 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [step]);
 
-  // Nudge check on load
+  // Proactive nudge mid-demo — after tonight's plan is generated (not on first load).
   useEffect(() => {
-    async function checkNudge() {
+    if (step !== "priorities" || !priorities || nudgeShown) return;
+    const timer = setTimeout(async () => {
       try {
         const res = await fetch("/api/nudge", {
           method: "POST",
@@ -191,11 +208,14 @@ export default function Home() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (data?.nudge && !data.do_not_disturb) setNudgeData(data);
+        if (data?.nudge && !data.do_not_disturb) {
+          setNudgeData(data);
+          setNudgeShown(true);
+        }
       } catch {}
-    }
-    checkNudge();
-  }, []);
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [step, priorities, nudgeShown, demoMode]);
 
   function toggleDemoMode() {
     const next = !demoMode;
@@ -423,6 +443,19 @@ export default function Home() {
           />
         ) : (
         <LayoutGroup id="halo-stage">
+        <AnimatePresence mode="popLayout">
+          {phoneVisible && step === "request" && (
+            <CalendarDeliberation
+              key="calendar"
+              schedule={schedule}
+              goals={alexData.goals as Goal[]}
+              pastWorkHistory={pastWorkHistory}
+              telemetry={telemetry}
+              phase={calendarPhase}
+            />
+          )}
+        </AnimatePresence>
+
         <AnimatePresence mode="popLayout">
           {phoneVisible && (
             <PhoneMockup
