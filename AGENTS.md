@@ -2,7 +2,7 @@
 
 > **Event slug:** 2026-05-cursor-calgary-sait
 > **Stage:** 02-build
-> **Last updated:** 2026-05-23
+> **Last updated:** 2026-05-24
 >
 > This file is the single source of truth for this project. Each stage appends its section before advancing. Do not re-derive what is already written here.
 >
@@ -11,13 +11,11 @@
 > projects/2026-05-cursor-calgary-sait/
 > ├── AGENTS.md          ← this file (project brief + coding guidelines)
 > ├── CLAUDE.md          ← @AGENTS.md
-> ├── .mcp.json          ← MCP server config
 > ├── .claude/           ← Claude Code settings
 > ├── package.json
 > ├── next.config.ts
 > ├── tsconfig.json
 > ├── src/               ← Next.js source (app/, components/, lib/, scripts/)
-> ├── supabase/          ← migrations
 > ├── docs/              ← reference docs
 > └── pitch/             ← deck, script, writeup (Stage 03)
 > ```
@@ -99,9 +97,10 @@ Halo reflects back the gap between who you said you wanted to be and where your 
 |---|---|---|
 | Frontend | React + Next.js (App Router) | Default preferred stack |
 | Backend | Next.js API routes (`/app/api`) | Collocated, deploys as Vercel serverless automatically |
-| Data | Supabase | Postgres + auth + storage; MCP available during build |
-| AI / LLM | Claude (Anthropic) | Load-bearing: behavioral inference, drift detection, task decomposition, priority generation |
-| Deployment | Vercel | Native Next.js host; Vercel MCP available |
+| Data | Static JSON (`src/data/demo/`) | No database — all demo data is local JSON; no Supabase |
+| AI / LLM | Llama 3.1 70B via NVIDIA NIM (OpenAI-compatible SDK) | Forced tool use for structured JSON on every endpoint; mock fallback in `src/data/mock-responses.json` |
+| Schema validation | Zod | All LLM responses validated before the UI touches them |
+| Deployment | Vercel | Native Next.js host |
 
 ---
 
