@@ -55,23 +55,6 @@
 
 **Takeaway:** To pass AI screening, Innovation + Problem-Solution Fit = 45%. To win the final round, Technical Execution jumps to 25% (tied with Innovation). Engineer the hell out of it once you make top 8.
 
-- **Judges:**
-
-| Name | Role | Org | What they care about |
-|---|---|---|---|
-| Oguzhan Dogru | Advanced Process Control Engineer | CruxOCM | Real technical systems, ML workflows, high-impact demos. Rewards research-to-production thinking. |
-| Jia Ming Huang | Founder & Cursor Ambassador | Antler / Cursor | Startup viability, product thinking, community lens. |
-| Cal Leung | Partner & AI Automation Strategist | New Era Intelligence Automation | Operations, go-to-market, turning prototypes into useful systems. |
-| Audrey Aui Yong | CEO & Co-Founder | Tsuin.AI | Enterprise AI, project management, no-code, startup strategy, product leadership. |
-| Simon Loewen | Agribusiness AI Strategist & Cursor Ambassador | New Era Intelligence / Terralink | Practical automation, business workflows, customer-facing systems. |
-| Trystan Keller | Event Growth Strategist | Saleslink Strategies | Sales, demand generation, positioning, event marketing. |
-| Anvil Palamattam | AI & Platform Cloud Architect | Google | Architecture, cloud engineering, production deployment. |
-| Suprita Shankar | ML Engineer, Foundation Models | Apple | Data-centric AI, ML systems, production-scale engineering. Deep technical bar. |
-
-**Panel read:** Heavy on technical depth (Oguzhan, Anvil, Suprita) and product/GTM (Jia Ming, Cal, Audrey, Trystan). A strong build that solves a real problem clearly wins across both camps. Most judges are also available as mentors — use them during the event.
-
----
-
 ## Problem
 
 People make small, reasonable daily decisions — accepting invitations, helping others, taking on extra work — that individually feel justified but collectively pull them away from what they actually care about. The drift is invisible until it's too late to recover.
@@ -89,29 +72,6 @@ People make small, reasonable daily decisions — accepting invitations, helping
 ## Wow Moment
 
 Halo reflects back the gap between who you said you wanted to be and where your time actually went — before the week is already lost.
-
----
-
-## Spec
-
-### User Journey
-*(numbered steps in demo order)*
-
-1. Alex onboards — states two goals and logs this week's commitments and accepted invitations
-2. Alex is about to accept another request — Halo surfaces the drift: *"9 unplanned hours this week. Research paper: 0 hours in 12 days."*
-3. Halo generates tonight's priority list — what matters, time-boxed to Alex's real pace
-4. DS homework flagged as stalled — Halo breaks it into 4 chunks, first one is 20 minutes
-5. Session closes: *"3 hours protected for your goals tonight. You're back on track."*
-
-### Done When
-
-1. User can enter goals + commitments; system persists to Supabase and confirms receipt
-2. System calculates unplanned hours vs. goal-directed hours; drift message surfaces with real numbers from the data
-3. Claude returns a ranked priority list with time estimates; displayed clearly in the UI
-4. Stall signal detected (triggered via demo data); Claude returns 4 sub-tasks; displayed as actionable steps
-5. Session summary card renders with protected hours count and next goal nudge
-
----
 
 ## Scope
 
@@ -131,11 +91,6 @@ Halo reflects back the gap between who you said you wanted to be and where your 
 - Real-time data ingestion from external sources
 - Notifications / push alerts
 
-### Feasibility check
-- Buildable in time? Yes — 4 people, clear feature ownership, standard stack
-- Demoable live? Yes — pre-seeded Alex scenario, all steps exercisable in under 60 seconds
-- Does someone clearly need this? Yes — the team named the pain themselves (competing priorities, impulsive yes, drift from goals)
-
 ---
 
 ## Stack
@@ -147,46 +102,6 @@ Halo reflects back the gap between who you said you wanted to be and where your 
 | Data | Supabase | Postgres + auth + storage; MCP available during build |
 | AI / LLM | Claude (Anthropic) | Load-bearing: behavioral inference, drift detection, task decomposition, priority generation |
 | Deployment | Vercel | Native Next.js host; Vercel MCP available |
-
----
-
-## Visual Reference
-
-- **Reference:** TBD — fill in if provided before Stage 02 scaffold
-- **What to take from it:** —
-- **What to ignore:** —
-
----
-
-## Build Notes
-*(appended at Stage 02 gate)*
-
-### Happy path
-1.
-2.
-3.
-
-### Key decisions made during build
-
-
-### What's mocked or fragile
-
-
----
-
-## Pitch Angle
-*(appended at Stage 03 gate)*
-
-### Hook (one sentence)
-
-
-### Before / After framing
-
-
-### 60-second version outline
-
-
-### 3-minute version outline
 
 ---
 

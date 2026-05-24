@@ -1,0 +1,74 @@
+{
+  "week_start": "2026-05-19",
+  "protected_hours_per_day": 3,
+  "daily_bandwidth_hours": 8,
+  "demo_day": "Fri",
+  "obligations": [
+    {
+      "id": "obl-1",
+      "title": "CMPT-2201 Lecture",
+      "day": "Mon",
+      "start": "09:00",
+      "end": "10:30",
+      "type": "class",
+      "fixed": true
+    },
+    {
+      "id": "obl-2",
+      "title": "CMPT-2201 Lab",
+      "day": "Wed",
+      "start": "13:00",
+      "end": "15:00",
+      "type": "class",
+      "fixed": true
+    },
+    {
+      "id": "obl-3",
+      "title": "Campus job shift",
+      "day": "Wed",
+      "start": "16:00",
+      "end": "20:00",
+      "type": "work",
+      "fixed": true
+    },
+    {
+      "id": "obl-4",
+      "title": "CMPT-2201 Lecture",
+      "day": "Fri",
+      "start": "09:00",
+      "end": "10:30",
+      "type": "class",
+      "fixed": true
+    }
+  ],
+  "scheduled_tasks": [
+    {
+      "id": "hw_ds_04",
+      "goal_id": "10000000-0000-0000-0000-000000000002",
+      "title": "Assignment 4: Binary Search Trees",
+      "day": "Fri",
+      "start": "19:00",
+      "estimated_minutes": 210,
+      "conceptual_type": "Abstract Math & Complex Algorithms",
+      "deadline": "2026-05-24T09:00:00Z",
+      "status": "stalled"
+    },
+    {
+      "id": "research_block",
+      "goal_id": "10000000-0000-0000-0000-000000000001",
+      "title": "Research paper session",
+      "day": "Thu",
+      "start": "18:00",
+      "estimated_minutes": 120,
+      "conceptual_type": "Practical Coding",
+      "deadline": "2026-06-15T23:59:00Z",
+      "status": "skipped"
+    }
+  ],
+  "commitment_blocks": [
+    { "id": "cb-1", "commitment_id": "20000000-0000-0000-0000-000000000001", "title": "Helped roommate move", "day": "Mon", "start": "14:00", "hours": 3 },
+    { "id": "cb-2", "commitment_id": "20000000-0000-0000-0000-000000000002", "title": "Covered coworker shift", "day": "Tue", "start": "16:00", "hours": 2 },
+    { "id": "cb-3", "commitment_id": "20000000-0000-0000-0000-000000000003", "title": "Biology study group", "day": "Wed", "start": "11:00", "hours": 2 },
+    { "id": "cb-4", "commitment_id": "20000000-0000-0000-0000-000000000004", "title": "Group project meeting", "day": "Thu", "start": "13:00", "hours": 2 }
+  ]
+}

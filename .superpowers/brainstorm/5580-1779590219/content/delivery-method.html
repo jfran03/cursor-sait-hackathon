@@ -1,0 +1,33 @@
+<h2>How does the nudge reach the phone / watch during the demo?</h2>
+<p class="subtitle">This is the "wow moment" — judges see a real device light up. The question is what actually fires the notification.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Push notification via Expo / React Native</h3>
+      <p>A minimal companion app on your phone receives a push from the Halo backend. Shows up as a native iOS/Android notification — appears on phone <em>and</em> auto-forwards to Apple Watch / Wear OS. Real device, real OS notification, zero theatrics.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>SMS via Twilio</h3>
+      <p>Halo texts the nudge to your number. Zero app install. Judges see a real iMessage bubble land on the phone mid-demo. Forwards to Apple Watch natively. Fastest to wire up — Twilio free tier covers it.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Web Push (PWA)</h3>
+      <p>Halo is installed as a PWA on the phone. The backend sends a Web Push notification — appears on the lock screen and watch. No app store, no native app. Works on Android natively; iOS 17+ supports it.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="d" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Simulated (phone on screen, no real device)</h3>
+      <p>Phone mockup rendered in the browser alongside the dashboard. Animated notification card slides in on cue. No real device — but fully controlled, zero risk of demo failure, and judges still see "what it would look like."</p>
+    </div>
+  </div>
+</div>
