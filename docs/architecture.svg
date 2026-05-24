@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="680" viewBox="0 0 1100 680">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b2b2b" />
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#d6d3d1;stroke-width:1.5;rx:10;}
+      .title{font:600 14px/1.2 'Inter', Arial, sans-serif; fill:#292524}
+      .label{font:400 12px/1.2 'Inter', Arial, sans-serif; fill:#4e4e4e}
+      .cloud{fill:#f7fbff;stroke:#e7f0ff;}
+    </style>
+  </defs>
+
+  <!-- Frontend -->
+  <rect x="40" y="40" rx="14" ry="14" width="300" height="160" class="box"/>
+  <text x="60" y="70" class="title">Frontend (Next.js)</text>
+  <text x="60" y="95" class="label">- UI components (page.tsx)</text>
+  <text x="60" y="115" class="label">- PopupNudge, Calendar, Sidebar</text>
+  <text x="60" y="135" class="label">- Demo toggle (localStorage)</text>
+
+  <!-- Client telemetry -->
+  <rect x="40" y="220" rx="10" ry="10" width="220" height="120" fill="#fff" stroke="#e7e5e4"/>
+  <text x="60" y="250" class="title">Telemetry (client demo)</text>
+  <text x="60" y="275" class="label">- currentBehaviorTelemetry.json</text>
+  <text x="60" y="295" class="label">- humanLogs.json (demo)</text>
+
+  <!-- API layer -->
+  <rect x="420" y="40" rx="14" ry="14" width="300" height="380" class="box"/>
+  <text x="440" y="70" class="title">Server / API (Next API routes)</text>
+  <text x="440" y="100" class="label">/api/drift</text>
+  <text x="440" y="120" class="label">/api/priorities</text>
+  <text x="440" y="140" class="label">/api/decompose</text>
+  <text x="440" y="160" class="label">/api/nudge</text>
+  <text x="440" y="190" class="label">- fallback: src/data/mock-responses.json</text>
+  <text x="440" y="210" class="label">- run-prompts CLI (scripts/run-prompts.ts)</text>
+  <text x="440" y="230" class="label">- prompt templates: src/lib/prompts/*</text>
+
+  <!-- LLM / Integration -->
+  <g>
+    <rect x="770" y="40" rx="14" ry="14" width="260" height="140" class="box"/>
+    <text x="790" y="70" class="title">LLM Integration</text>
+    <text x="790" y="95" class="label">- NVIDIA / Meta / Claude</text>
+    <text x="790" y="115" class="label">- env: NVIDIA_API_KEY</text>
+    <text x="790" y="135" class="label">- model calls + parsing</text>
+  </g>
+
+  <!-- Mock & Seeds -->
+  <rect x="770" y="200" rx="10" ry="10" width="260" height="120" class="box"/>
+  <text x="790" y="230" class="title">Mock & Seed</text>
+  <text x="790" y="255" class="label">- src/data/mock-responses.json</text>
+  <text x="790" y="275" class="label">- scripts/seed.ts (Supabase)</text>
+
+  <!-- Supabase -->
+  <rect x="420" y="460" rx="12" ry="12" width="300" height="120" class="box"/>
+  <text x="440" y="490" class="title">Supabase (Postgres)</text>
+  <text x="440" y="515" class="label">- User profiles, goals, commitments</text>
+  <text x="440" y="535" class="label">- auth optional for demo</text>
+
+  <!-- run-prompts CLI -->
+  <rect x="40" y="380" rx="10" ry="10" width="300" height="120" class="box"/>
+  <text x="60" y="410" class="title">CLI: run-prompts</text>
+  <text x="60" y="435" class="label">- builds context from demo files</text>
+  <text x="60" y="455" class="label">- used for offline testing</text>
+
+  <!-- Arrows -->
+  <line x1="340" y1="120" x2="420" y2="120" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="360" y="110" class="label">API requests (drift/priorities/decompose/nudge)</text>
+
+  <line x1="720" y1="95" x2="770" y2="95" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="680" y="85" class="label">LLM calls (live)</text>
+
+  <line x1="650" y1="220" x2="770" y2="220" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="610" y="210" class="label">If LLM missing / error → read mock</text>
+
+  <line x1="560" y1="500" x2="560" y2="380" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="480" y="440" class="label">Persist & read demo data</text>
+
+  <line x1="190" y1="280" x2="420" y2="120" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="220" y="230" class="label">Telemetry posted for nudge/assessment</text>
+
+  <line x1="360" y1="600" x2="420" y2="580" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="230" y="610" class="label">scripts/seed.ts → Supabase</text>
+
+  <line x1="720" y1="260" x2="720" y2="200" stroke="#2b2b2b" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Legend -->
+  <rect x="40" y="560" rx="6" ry="6" width="1000" height="80" fill="#fff" stroke="#e7e5e4" />
+  <text x="60" y="588" class="title">Notes</text>
+  <text x="60" y="610" class="label">- API routes prefer live LLM; fall back to mock file for demo stability.</text>
+  <text x="60" y="628" class="label">- Demo mode toggle forces nudges and overrides suppress flags for presentations.</text>
+
+</svg>
