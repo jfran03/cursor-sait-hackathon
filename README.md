@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Halo — Next.js demo (Cursor Calgary @ SAIT)
 
-## Getting Started
+Overview
 
-First, run the development server:
+Halo demonstrates drift detection and adaptive prioritization for a student persona (Alex). This repo contains the UI, prompt runners, seed data, and API routes used for the hackathon demo.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Quick start
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Add environment variables in .env.local (root):
 
-## Learn More
+   NVIDIA_API_KEY=...           # required to call LLM; optional for demo if using mock fallback
+   NEXT_PUBLIC_SUPABASE_URL=...  # Supabase URL (optional for demo)
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=... # Supabase anon key (optional for demo)
+   SUPABASE_SERVICE_ROLE_KEY=... # Service role key used by scripts/seed.ts (optional)
 
-To learn more about Next.js, take a look at the following resources:
+3. Run the dev server:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   npm run dev
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Seed demo data (optional — requires SUPABASE keys)
 
-## Deploy on Vercel
+   npx tsx scripts/seed.ts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run prompt runners (calls LLM via NVIDIA integration)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   npm run prompts
+
+Mock fallback (recommended for live demo)
+
+- A safe mock file with canonical responses lives at src/data/mock-responses.json and is used automatically by the API routes when the NVIDIA_API_KEY is missing or when the model call fails.
+- API routes with fallback: /api/drift, /api/priorities, /api/decompose — each returns the mock section when LLM is unavailable.
+
+Demo flow (60s)
+
+Follow src/data/demo/demoFlow.md for the scripted 60s demo steps: onboarding → incoming request → drift message → priorities → decompose → session summary.
+
+Files of interest
+
+- src/data/demo/userProfile.json — Alex demo profile (goals, commitments, stalled item)
+- src/data/mock-responses.json — canned drift/priorities/decompose JSON used for fallback
+- src/scripts/run-prompts.ts — runner that builds prompt context and calls the LLM (or verify against mock)
+- src/lib/prompts/*.ts — system prompt templates for drift/priorities/decompose (tuned for demo)
+- src/app/api/{drift,priorities,decompose}/route.ts — API endpoints; they now fallback to mock responses when LLM is missing/fails
+- scripts/seed.ts — seeds the Alex scenario into Supabase (requires SUPABASE keys)
+- src/data/demo/demoFlow.md — step-by-step demo script and operator notes
+
+Smoke tests
+
+- Quick check (server running): POST sample payloads to each API route. Example using curl (replace port if needed):
+
+  curl -X POST http://localhost:3000/api/drift -d '{"goals":[],"commitments":[]}' -H 'Content-Type: application/json'
+
+- When NVIDIA_API_KEY is unset, the endpoints should return mock responses from src/data/mock-responses.json.
+
+Development notes
+
+- To force the mock during development, unset NVIDIA_API_KEY in your environment or remove it from .env.local.
+- Prompts have been tuned to produce demo-friendly outputs (3 priority items, protected_hours ≈ 3, 4×20m decompose subtasks for coursework).
+
+Contact / Troubleshooting
+
+If the prompts fail or the model returns malformed output, the API will fall back to mock responses. For other issues, check server logs and ensure .env.local is correct.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
